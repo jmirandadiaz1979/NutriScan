@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>NutriScan</title>
+
+<!-- PWA meta tags -->
+<meta name="application-name" content="NutriScan">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="NutriScan">
+<meta name="theme-color" content="#16C79A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Escanea alimentos y cosméticos. Conoce su impacto real en tu salud.">
+
+<!-- PWA icons (SVG inline as data URI — no external files needed) -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%2316C79A'/%3E%3Cpath d='M256 96C167 96 96 167 96 256s71 160 160 160 160-71 160-160S345 96 256 96zm-40 232v-144l120 72-120 72z' fill='white'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%2316C79A'/%3E%3Cpath d='M256 96C167 96 96 167 96 256s71 160 160 160 160-71 160-160S345 96 256 96zm-40 232v-144l120 72-120 72z' fill='white'/%3E%3C/svg%3E">
+
+<!-- PWA manifest injected inline via JS (no separate file needed) -->
+<script>
+(function(){
+  const manifest = {
+    name: 'NutriScan',
+    short_name: 'NutriScan',
+    description: 'Escanea alimentos y cosméticos. Conoce su impacto real en tu salud.',
+    start_url: './',
+    display: 'standalone',
+    orientation: 'portrait',
+    background_color: '#F8FAFB',
+    theme_color: '#16C79A',
+    lang: 'es',
+    icons: [
+      {
+        src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%2316C79A'/%3E%3Cpath d='M256 96C167 96 96 167 96 256s71 160 160 160 160-71 160-160S345 96 256 96zm-40 232v-144l120 72-120 72z' fill='white'/%3E%3C/svg%3E",
+        sizes: '512x512',
+        type: 'image/svg+xml',
+        purpose: 'any maskable'
+      }
+    ],
+    categories: ['health', 'food', 'lifestyle'],
+    shortcuts: [
+      { name: 'Escanear', short_name: 'Escanear', description: 'Abrir escáner', url: './#scan' }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest'; link.href = url;
+  document.head.appendChild(link);
+})();
+</script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<style>
+:root{
+  --g1:#16C79A;--g2:#0D9E7A;--g3:#E8F9F3;
+  --y1:#F59E0B;--y2:#D97706;--y3:#FEF3C7;
+  --o1:#F97316;--o2:#EA580C;--o3:#FFF0E5;
+  --r1:#EF4444;--r2:#DC2626;--r3:#FEE2E2;
+  --b1:#6366F1;--b2:#4F46E5;--b3:#EEF2FF;
+  --p1:#EC4899;--p3:#FCE7F3;
+  --bg:#F8FAFB;--card:#FFFFFF;--border:#E8EDF2;
+  --t1:#0F172A;--t2:#475569;--t3:#94A3B8;
+  --radius:16px;--radius2:12px;
+  --sh:0 2px 12px rgba(0,0,0,0.06);--sh2:0 8px 32px rgba(0,0,0,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--t1);max-width:430px;margin:0 auto;min-height:100vh;overflow-x:hidden;}
+.screen{display:none;min-height:100vh;flex-direction:column;animation:fadeIn .2s ease;}
+.screen.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.hdr{background:var(--card);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;}
+.logo{display:flex;align-items:center;gap:9px;}
+.logo-mark{width:34px;height:34px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:10px;display:flex;align-items:center;justify-content:center;}
+.logo-mark svg{width:18px;height:18px;fill:white;}
+.logo-name{font-family:'Lora',serif;font-size:19px;font-weight:600;letter-spacing:-.3px;}
+.logo-name b{color:var(--g1);}
+.ico-btn{width:36px;height:36px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ico-btn svg{width:19px;height:19px;stroke:var(--t2);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.bnav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:var(--card);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:200;}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 0 8px;cursor:pointer;border:none;background:none;gap:3px;}
+.bnav-item svg{width:22px;height:22px;stroke:var(--t3);fill:none;stroke-width:1.8;stroke-linecap:round;}
+.bnav-item span{font-size:9.5px;color:var(--t3);font-weight:500;}
+.bnav-item.on svg{stroke:var(--g1);}
+.bnav-item.on span{color:var(--g1);}
+.scroll{flex:1;overflow-y:auto;padding:14px 14px 100px;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--sh);margin-bottom:12px;overflow:hidden;}
+.card-pad{padding:16px 18px;}
+.sec-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--t3);margin:18px 0 10px 4px;}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:20px;font-size:12px;font-weight:600;}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px;}
+.field label{font-size:12px;font-weight:600;color:var(--t2);}
+.field input,.field select,.field textarea{background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius2);padding:11px 14px;font-size:14px;font-family:'Sora',sans-serif;color:var(--t1);outline:none;transition:border .2s;}
+.field input:focus,.field select:focus{border-color:var(--g1);}
+.field-row{display:flex;gap:10px;}
+.field-row .field{flex:1;}
+.btn{width:100%;padding:14px;border-radius:var(--radius2);border:none;font-size:15px;font-weight:600;font-family:'Sora',sans-serif;cursor:pointer;transition:transform .12s,opacity .12s;}
+.btn:active{transform:scale(0.98);opacity:.9;}
+.btn-primary{background:linear-gradient(135deg,var(--g1),var(--g2));color:white;}
+.btn-secondary{background:var(--bg);border:1.5px solid var(--border);color:var(--t1);}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:none;align-items:flex-end;}
+.overlay.open{display:flex;}
+.modal{background:var(--card);width:100%;border-radius:22px 22px 0 0;max-height:92vh;overflow-y:auto;animation:slideUp .28s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:none}}
+.modal-grip{width:38px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;}
+.modal-title{font-size:17px;font-weight:700;}
+.modal-close{width:30px;height:30px;border-radius:50%;background:var(--bg);border:none;cursor:pointer;font-size:17px;color:var(--t2);}
+.modal-body{padding:0 18px 32px;}
+.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:var(--t1);color:white;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:500;z-index:999;opacity:0;transition:opacity .3s;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;}
+/* HOME */
+#s-home{background:var(--card);}
+.home-hero{background:linear-gradient(135deg,#0a7a60 0%,var(--g1) 55%,#5EE9BC 100%);padding:30px 22px 52px;position:relative;overflow:hidden;}
+.home-hero::before,.home-hero::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,.07);}
+.home-hero::before{width:200px;height:200px;top:-60px;right:-50px;}
+.home-hero::after{width:150px;height:150px;bottom:-50px;left:-30px;}
+.hero-t{font-family:'Lora',serif;font-size:24px;font-weight:600;color:white;margin-bottom:6px;position:relative;z-index:1;}
+.hero-s{font-size:13px;color:rgba(255,255,255,.82);line-height:1.55;position:relative;z-index:1;}
+.hero-chips{display:flex;gap:10px;margin-top:18px;position:relative;z-index:1;}
+.hero-chip{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);border-radius:10px;padding:8px 14px;text-align:center;}
+.hero-chip-n{font-size:16px;font-weight:700;color:white;}
+.hero-chip-l{font-size:10px;color:rgba(255,255,255,.75);margin-top:1px;}
+.scan-float{display:flex;justify-content:center;margin:-28px 0 0;position:relative;z-index:10;}
+.scan-btn{background:white;border:none;border-radius:18px;padding:18px 32px;display:flex;align-items:center;gap:14px;box-shadow:0 8px 28px rgba(0,0,0,.13);cursor:pointer;transition:transform .15s,box-shadow .15s;}
+.scan-btn:active{transform:scale(.97);box-shadow:0 4px 14px rgba(0,0,0,.1);}
+.scan-btn-ico{width:50px;height:50px;background:linear-gradient(135deg,var(--g1),var(--g2));border-radius:14px;display:flex;align-items:center;justify-content:center;}
+.scan-btn-ico svg{width:26px;height:26px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;}
+.scan-btn strong{display:block;font-size:15px;font-weight:700;color:var(--t1);}
+.scan-btn small{font-size:12px;color:var(--t2);}
+.type-tabs{display:flex;gap:8px;padding:18px 14px 0;}
+.type-tab{flex:1;padding:10px;border-radius:var(--radius2);border:1.5px solid var(--border);background:var(--card);font-size:13px;font-weight:600;color:var(--t2);cursor:pointer;text-align:center;transition:all .15s;}
+.type-tab.on{background:var(--g3);border-color:var(--g1);color:var(--g2);}
+.h-item{display:flex;align-items:center;gap:13px;padding:13px 16px;border-bottom:1px solid var(--bg);cursor:pointer;transition:background .1s;}
+.h-item:last-child{border-bottom:none;}
+.h-item:active{background:var(--bg);}
+.h-badge{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;flex-shrink:0;}
+.h-info{flex:1;min-width:0;}
+.h-name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.h-brand{font-size:12px;color:var(--t2);margin-top:2px;}
+.h-arr{color:var(--t3);font-size:20px;}
+/* swipe-to-delete */
+.h-item-wrap{position:relative;overflow:hidden;}
+.h-item-del{position:absolute;right:0;top:0;bottom:0;width:72px;background:var(--r1);display:flex;align-items:center;justify-content:center;transform:translateX(100%);transition:transform .22s ease;cursor:pointer;}
+.h-item-del svg{width:20px;height:20px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;}
+.h-item-wrap.swiped .h-item-del{transform:translateX(0);}
+.h-item-wrap.swiped .h-item{transform:translateX(-72px);}
+.h-item{transition:transform .22s ease;}
+/* clear all btn */
+.hist-clear-btn{display:flex;align-items:center;gap:6px;padding:11px 16px;border:none;background:none;font-size:13px;font-weight:600;color:var(--r1);cursor:pointer;width:100%;border-top:1px solid var(--border);}
+.hist-clear-btn svg{width:15px;height:15px;stroke:var(--r1);fill:none;stroke-width:2;stroke-linecap:round;}
+/* SCANNER */
+#s-scan{background:#000;}
+.scan-hdr{background:rgba(0,0,0,.7);backdrop-filter:blur(12px);padding:14px 18px;display:flex;align-items:center;gap:14px;}
+.scan-hdr-title{font-size:16px;font-weight:600;color:white;}
+.back-btn{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.12);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.back-btn svg{width:18px;height:18px;stroke:white;fill:none;stroke-width:2;stroke-linecap:round;}
+#quagga-wrap{flex:1;position:relative;display:flex;align-items:center;justify-content:center;}
+#quagga-wrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+#quagga-wrap canvas{display:none;}
+.scan-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;}
+.sf{width:260px;height:160px;position:relative;}
+.sf::before,.sf::after,.sfi::before,.sfi::after{content:'';position:absolute;width:26px;height:26px;border-color:white;border-style:solid;}
+.sf::before{top:0;left:0;border-width:3px 0 0 3px;border-radius:4px 0 0 0;}
+.sf::after{top:0;right:0;border-width:3px 3px 0 0;border-radius:0 4px 0 0;}
+.sfi::before{bottom:0;left:0;border-width:0 0 3px 3px;border-radius:0 0 0 4px;}
+.sfi::after{bottom:0;right:0;border-width:0 3px 3px 0;border-radius:0 0 4px 0;}
+.scan-line{position:absolute;left:4px;right:4px;height:2px;background:linear-gradient(90deg,transparent,var(--g1),transparent);animation:scanAnim 2s ease-in-out infinite;top:50%;}
+@keyframes scanAnim{0%,100%{transform:translateY(-60px);opacity:.6}50%{transform:translateY(60px);opacity:1}}
+.scan-hint{margin-top:24px;background:rgba(0,0,0,.5);border-radius:20px;padding:9px 18px;font-size:12px;color:rgba(255,255,255,.9);}
+.scan-type-pill{margin-top:14px;display:flex;gap:8px;}
+.stp{padding:6px 16px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s;pointer-events:all;}
+.stp.on{background:var(--g1);color:white;}
+.stp:not(.on){background:rgba(255,255,255,.15);color:rgba(255,255,255,.8);}
+.scan-footer{background:rgba(0,0,0,.75);backdrop-filter:blur(12px);padding:16px 18px 20px;}
+.man-row{display:flex;gap:10px;margin-bottom:12px;}
+.man-row input{flex:1;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:11px;padding:11px 14px;font-size:14px;color:white;font-family:'Sora',sans-serif;outline:none;}
+.man-row input::placeholder{color:rgba(255,255,255,.4);}
+.man-row button{background:var(--g1);border:none;border-radius:11px;padding:11px 16px;font-size:14px;font-weight:600;color:white;cursor:pointer;}
+.demo-row{display:flex;gap:7px;flex-wrap:wrap;}
+.demo-lbl{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:5px;}
+.dbtn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:20px;padding:5px 13px;font-size:12px;color:rgba(255,255,255,.7);cursor:pointer;}
+/* LOADING */
+#s-loading{background:var(--card);align-items:center;justify-content:center;gap:18px;}
+.ld-ring{width:56px;height:56px;border-radius:50%;border:4px solid var(--border);border-top-color:var(--g1);animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ld-t{font-size:16px;color:var(--t2);}
+.ld-s{font-size:13px;color:var(--t3);margin-top:4px;text-align:center;}
+/* RESULT */
+#s-result{background:var(--bg);}
+.res-hdr{background:var(--card);padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;}
+.res-thumb{width:50px;height:50px;border-radius:14px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;overflow:hidden;}
+.res-thumb img{width:100%;height:100%;object-fit:contain;}
+.res-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.res-brand{font-size:12px;color:var(--t2);margin-top:2px;}
+.score-card{background:var(--card);border-radius:var(--radius);padding:22px 18px;margin-bottom:12px;box-shadow:var(--sh);text-align:center;}
+.sc-ring{width:108px;height:108px;border-radius:50%;margin:0 auto 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;border:6px solid;}
+.sc-n{font-size:34px;font-weight:800;line-height:1;}
+.sc-max{font-size:12px;opacity:.55;margin-top:2px;}
+.sc-lbl{font-size:17px;font-weight:700;margin-bottom:5px;}
+.sc-desc{font-size:13px;color:var(--t2);line-height:1.55;}
+.bd-row{display:flex;align-items:center;gap:13px;padding:14px 16px;border-bottom:1px solid var(--bg);}
+.bd-row:last-child{border-bottom:none;}
+.bd-ico{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+.bd-info{flex:1;}
+.bd-title{font-size:13px;font-weight:600;}
+.bd-sub{font-size:11px;color:var(--t2);margin-top:1px;}
+.bd-bar-w{height:5px;background:var(--border);border-radius:3px;margin-top:7px;overflow:hidden;}
+.bd-bar{height:100%;border-radius:3px;transition:width .9s ease;}
+.bd-pct{font-size:13px;font-weight:700;flex-shrink:0;}
+.ns-bar{display:flex;gap:5px;}
+.ns-letter{flex:1;height:42px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;transition:all .3s;}
+.nt-row{display:flex;align-items:center;padding:11px 16px;border-bottom:1px solid var(--bg);}
+.nt-row:last-child{border-bottom:none;}
+.nt-row.hd{background:var(--bg);}
+.nt-name{flex:1;font-size:13px;}
+.nt-row.hd .nt-name{font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;}
+.nt-mini{width:72px;margin:0 10px;}
+.nt-mini-bg{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.nt-mini-fill{height:100%;border-radius:2px;}
+.nt-lv{font-size:11px;font-weight:600;min-width:52px;text-align:right;}
+.nt-val{font-size:13px;font-weight:600;min-width:58px;text-align:right;}
+.add-item{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--bg);}
+.add-item:last-child{border-bottom:none;}
+.add-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+.add-info{flex:1;}
+.add-name{font-size:13px;font-weight:600;}
+.add-desc{font-size:11px;color:var(--t2);margin-top:2px;}
+/* ALTERNATIVES — clickable */
+.alts-wrap{display:flex;gap:11px;overflow-x:auto;padding:0 14px 14px;scrollbar-width:none;}
+.alts-wrap::-webkit-scrollbar{display:none;}
+.alt-card{background:var(--card);border-radius:var(--radius);padding:15px;min-width:145px;max-width:145px;box-shadow:var(--sh);flex-shrink:0;cursor:pointer;transition:transform .15s,box-shadow .15s;border:2px solid transparent;}
+.alt-card:active{transform:scale(.96);box-shadow:var(--sh2);}
+.alt-card.selected{border-color:var(--g1);}
+.alt-emo{font-size:30px;text-align:center;margin-bottom:9px;}
+.alt-name{font-size:12px;font-weight:600;margin-bottom:5px;line-height:1.4;}
+.alt-brand{font-size:10px;color:var(--t2);margin-bottom:8px;}
+/* PROFILE */
+#s-profile{background:var(--bg);}
+.prof-hero{background:linear-gradient(135deg,var(--b2),var(--b1));padding:28px 20px 44px;position:relative;overflow:hidden;}
+.prof-hero::before{content:'';position:absolute;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.07);top:-50px;right:-40px;}
+.prof-avatar{width:70px;height:70px;border-radius:50%;background:rgba(255,255,255,.2);border:3px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px;}
+.prof-name-disp{font-size:20px;font-weight:700;color:white;}
+.prof-sub-disp{font-size:13px;color:rgba(255,255,255,.75);margin-top:3px;}
+.macro-strip{display:flex;gap:10px;margin:-24px 14px 0;position:relative;z-index:10;margin-bottom:12px;}
+.macro-chip{flex:1;background:var(--card);border-radius:var(--radius2);padding:12px;text-align:center;box-shadow:var(--sh);}
+.macro-chip-val{font-size:16px;font-weight:800;}
+.macro-chip-lbl{font-size:10px;color:var(--t2);margin-top:2px;}
+.radio-row{display:flex;gap:8px;flex-wrap:wrap;}
+.radio-opt{flex:1;min-width:80px;padding:9px 10px;border-radius:var(--radius2);border:1.5px solid var(--border);font-size:12px;font-weight:600;color:var(--t2);cursor:pointer;text-align:center;transition:all .15s;}
+.radio-opt.on{border-color:var(--b1);background:var(--b3);color:var(--b2);}
+/* DIARY */
+#s-diary{background:var(--bg);}
+.ring-wrap{display:flex;gap:10px;overflow-x:auto;padding:0 14px 0;scrollbar-width:none;margin-bottom:14px;}
+.ring-wrap::-webkit-scrollbar{display:none;}
+.ring-item{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:5px;}
+.ring-svg{width:58px;height:58px;}
+.ring-lbl{font-size:10px;color:var(--t2);font-weight:500;}
+.ring-val{font-size:11px;font-weight:700;}
+.meal-card{background:var(--card);border-radius:var(--radius);box-shadow:var(--sh);margin-bottom:10px;overflow:hidden;}
+.meal-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;}
+.meal-hdr-left{display:flex;align-items:center;gap:11px;}
+.meal-ico{font-size:22px;}
+.meal-name{font-size:14px;font-weight:700;}
+.meal-cals{font-size:12px;color:var(--t2);margin-top:2px;}
+.meal-arrow{font-size:20px;color:var(--t3);transition:transform .2s;}
+.meal-arrow.open{transform:rotate(90deg);}
+.meal-body{display:none;border-top:1px solid var(--bg);}
+.meal-body.open{display:block;}
+.meal-product-row{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--bg);}
+.meal-product-row:last-child{border-bottom:none;}
+.mp-name{flex:1;font-size:13px;font-weight:600;}
+.mp-qty{font-size:12px;color:var(--t2);}
+.mp-kcal{font-size:13px;font-weight:700;color:var(--g2);}
+.mp-del{width:26px;height:26px;border-radius:50%;background:var(--r3);border:none;cursor:pointer;font-size:14px;color:var(--r1);display:flex;align-items:center;justify-content:center;}
+.meal-add-btn{display:flex;align-items:center;gap:8px;padding:12px 14px;color:var(--g1);font-size:13px;font-weight:600;cursor:pointer;background:none;border:none;width:100%;}
+/* TRACKING */
+#s-track{background:var(--bg);}
+.track-date-strip{display:flex;gap:8px;overflow-x:auto;padding:0 14px 0;scrollbar-width:none;margin-bottom:4px;}
+.track-date-strip::-webkit-scrollbar{display:none;}
+.tday{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 12px;border-radius:var(--radius2);border:1.5px solid var(--border);background:var(--card);cursor:pointer;transition:all .15s;}
+.tday.on{background:var(--g1);border-color:var(--g1);}
+.tday-d{font-size:13px;font-weight:700;}
+.tday-n{font-size:10px;font-weight:500;}
+.tday.on .tday-d,.tday.on .tday-n{color:white;}
+.tday:not(.on) .tday-d{color:var(--t1);}
+.tday:not(.on) .tday-n{color:var(--t3);}
+.tday-dot{width:5px;height:5px;border-radius:50%;background:var(--g1);margin-top:3px;}
+.tday.on .tday-dot{background:white;}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.stat-box{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--sh);}
+.stat-box-ico{font-size:22px;margin-bottom:8px;}
+.stat-box-val{font-size:22px;font-weight:800;color:var(--t1);}
+.stat-box-lbl{font-size:11px;color:var(--t2);margin-top:3px;line-height:1.4;}
+.stat-box-trend{font-size:11px;font-weight:600;margin-top:5px;}
+.trend-up{color:var(--r1);}
+.trend-dn{color:var(--g1);}
+.chart-wrap{position:relative;height:100px;}
+.chart-svg{width:100%;height:100px;}
+.chart-bar-wrap{display:flex;align-items:flex-end;gap:5px;height:80px;padding:0 4px;}
+.cb{flex:1;border-radius:4px 4px 0 0;min-height:4px;transition:height .6s ease;cursor:pointer;}
+.chart-labels{display:flex;gap:5px;padding:4px 4px 0;}
+.cl{flex:1;font-size:9px;color:var(--t3);text-align:center;}
+.check-row{display:flex;align-items:center;gap:12px;padding:13px 16px;border-bottom:1px solid var(--bg);}
+.check-row:last-child{border-bottom:none;}
+.check-circle{width:24px;height:24px;border-radius:50%;border:2.5px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;flex-shrink:0;}
+.check-circle.done{background:var(--g1);border-color:var(--g1);}
+.check-circle svg{width:13px;height:13px;stroke:white;fill:none;stroke-width:3;stroke-linecap:round;}
+.check-lbl{flex:1;font-size:13px;font-weight:600;}
+.check-sub{font-size:11px;color:var(--t2);margin-top:2px;}
+/* measure tabs */
+.mtabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin-bottom:14px;}
+.mtabs::-webkit-scrollbar{display:none;}
+.mtab{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--border);background:var(--card);color:var(--t2);cursor:pointer;transition:all .15s;}
+.mtab.on{background:var(--b1);border-color:var(--b1);color:white;}
+/* cosmetics */
+.ingr-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bg);}
+.ingr-item:last-child{border-bottom:none;}
+.ingr-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.ingr-name{font-size:13px;font-weight:600;}
+.ingr-desc{font-size:11px;color:var(--t2);margin-top:2px;}
+.ingr-tag{font-size:10px;font-weight:700;padding:3px 9px;border-radius:10px;}
+/* alt detail modal */
+.alt-detail-score{display:flex;flex-direction:column;align-items:center;padding:20px 0 16px;}
+.alt-detail-ring{width:90px;height:90px;border-radius:50%;border:5px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+</style>
+</head>
+<body>
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="hdr">
+    <div class="logo"><div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg></div><span class="logo-name">Nutri<b>Scan</b></span></div>
+    <button class="ico-btn" onclick="openModal('m-info')"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></button>
+  </div>
+  <div class="home-hero"><div class="hero-t">Come con inteligencia 🥦</div><div class="hero-s">Escanea alimentos y cosméticos.<br>Conoce su impacto real en tu salud.</div><div class="hero-chips"><div class="hero-chip"><div class="hero-chip-n">4M+</div><div class="hero-chip-l">Productos</div></div><div class="hero-chip"><div class="hero-chip-n">OFF</div><div class="hero-chip-l">Base datos</div></div><div class="hero-chip"><div class="hero-chip-n">100%</div><div class="hero-chip-l">Gratis</div></div></div></div>
+  <div class="scan-float"><button class="scan-btn" onclick="goScan()"><div class="scan-btn-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg></div><div><strong>Escanear producto</strong><small>Alimento o cosmético</small></div></button></div>
+  <div class="type-tabs" style="margin-bottom:4px;"><button class="type-tab on" onclick="filterHistory('food',this)">🥗 Alimentos</button><button class="type-tab" onclick="filterHistory('cosm',this)">💄 Cosméticos</button><button class="type-tab" onclick="filterHistory('all',this)">📦 Todo</button></div>
+  <div class="scroll" style="padding-top:6px;"><div style="display:flex;align-items:center;justify-content:space-between;margin:0 4px 10px;"><div class="sec-title" style="margin:0">Historial reciente</div><div style="font-size:10px;color:var(--t3);">← desliza para borrar</div></div><div class="card" id="hist-container"><div id="hist-list" style="padding:6px 0;"><div style="padding:28px 20px;text-align:center;color:var(--t3);font-size:13px;line-height:1.6;"><div style="font-size:36px;margin-bottom:10px;">📦</div>Aún no has escaneado ningún producto</div></div></div></div>
+  <div class="bnav">
+    <button class="bnav-item on" onclick="navTo('s-home',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></button>
+    <button class="bnav-item" onclick="goScan()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg><span>Escanear</span></button>
+    <button class="bnav-item" onclick="navTo('s-diary',this);renderDiary()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><span>Diario</span></button>
+    <button class="bnav-item" onclick="navTo('s-profile',this);renderProfile()"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Perfil</span></button>
+    <button class="bnav-item" onclick="navTo('s-track',this);renderTracking()"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Seguimiento</span></button>
+  </div>
+</div>
+<!-- SCANNER -->
+<div id="s-scan" class="screen">
+  <div class="scan-hdr"><button class="back-btn" onclick="stopScan();navTo('s-home')"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><span class="scan-hdr-title">Escanear producto</span></div>
+  <div id="quagga-wrap"><div class="scan-overlay"><div class="scan-type-pill"><button class="stp on" id="stp-food" onclick="setScanType('food')">🥗 Alimento</button><button class="stp" id="stp-cosm" onclick="setScanType('cosm')">💄 Cosmético</button></div><div class="sf"><div class="sfi"></div><div class="scan-line"></div></div><div class="scan-hint">Centra el código de barras</div></div></div>
+  <div class="scan-footer">
+    <div class="man-row"><input type="number" id="bc-input" placeholder="Código manual…" inputmode="numeric"><button onclick="fetchProduct(document.getElementById('bc-input').value)">Buscar</button></div>
+    <div class="demo-lbl">Demos rápidos:</div>
+    <div class="demo-row"><button class="dbtn" onclick="fetchProduct('3017620422003')">🍫 Nutella</button><button class="dbtn" onclick="fetchProduct('7622300489434')">🍪 Oreo</button><button class="dbtn" onclick="fetchProduct('5449000000996')">🥤 Coca-Cola</button><button class="dbtn" onclick="fetchProduct('8480000542687')">🥛 Leche</button><button class="dbtn" onclick="fetchProduct('3228857000036')">🥗 Knorr</button><button class="dbtn" onclick="fetchProduct('3600550361824','cosm')">💄 L'Oréal</button><button class="dbtn" onclick="fetchProduct('4005900221032','cosm')">🧴 Nivea</button></div>
+  </div>
+</div>
+<!-- LOADING -->
+<div id="s-loading" class="screen"><div class="ld-ring"></div><div><div class="ld-t">Analizando producto…</div><div class="ld-s">Consultando base de datos global</div></div></div>
+<!-- RESULT -->
+<div id="s-result" class="screen">
+  <div class="res-hdr">
+    <button class="back-btn" style="background:var(--bg);" onclick="stopScan();navTo('s-home')"><svg viewBox="0 0 24 24" style="stroke:var(--t2)"><polyline points="15 18 9 12 15 6"/></svg></button>
+    <div class="res-thumb" id="res-thumb">📦</div>
+    <div style="flex:1;min-width:0;"><div class="res-name" id="res-name">—</div><div class="res-brand" id="res-brand">—</div></div>
+    <button class="ico-btn" onclick="addProductToDiary()" title="Añadir al diario"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button>
+  </div>
+  <div class="scroll" id="res-scroll"></div>
+  <div class="bnav">
+    <button class="bnav-item" onclick="stopScan();navTo('s-home')"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></button>
+    <button class="bnav-item on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Resultado</span></button>
+    <button class="bnav-item" onclick="addProductToDiary()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg><span>+ Diario</span></button>
+    <button class="bnav-item" onclick="navTo('s-profile');renderProfile()"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Perfil</span></button>
+    <button class="bnav-item" onclick="navTo('s-track');renderTracking()"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Seguimiento</span></button>
+  </div>
+</div>
+<!-- PROFILE -->
+<div id="s-profile" class="screen">
+  <div class="prof-hero" id="prof-hero"><div class="prof-avatar" id="prof-avatar">👤</div><div class="prof-name-disp" id="prof-name-disp">Mi Perfil</div><div class="prof-sub-disp" id="prof-sub-disp">Completa tus datos</div></div>
+  <div class="macro-strip" id="macro-strip"><div class="macro-chip"><div class="macro-chip-val" id="mc-kcal">—</div><div class="macro-chip-lbl">kcal/día</div></div><div class="macro-chip"><div class="macro-chip-val" id="mc-prot">—g</div><div class="macro-chip-lbl">proteínas</div></div><div class="macro-chip"><div class="macro-chip-val" id="mc-carb">—g</div><div class="macro-chip-lbl">hidratos</div></div><div class="macro-chip"><div class="macro-chip-val" id="mc-fat">—g</div><div class="macro-chip-lbl">grasas</div></div></div>
+  <div class="scroll" id="prof-scroll">
+    <div class="sec-title">Datos personales</div>
+    <div class="card card-pad"><div class="field"><label>Nombre</label><input id="p-name" placeholder="Tu nombre"></div><div class="field-row"><div class="field"><label>Edad</label><input id="p-age" type="number" placeholder="años" min="10" max="99"></div><div class="field"><label>Sexo</label><select id="p-sex"><option value="m">Hombre</option><option value="f">Mujer</option></select></div></div></div>
+    <div class="sec-title">Datos biométricos</div>
+    <div class="card card-pad"><div class="field-row"><div class="field"><label>Peso (kg)</label><input id="p-weight" type="number" placeholder="70" step="0.1"></div><div class="field"><label>Altura (cm)</label><input id="p-height" type="number" placeholder="175"></div></div><div class="field-row"><div class="field"><label>Cintura (cm)</label><input id="p-waist" type="number" placeholder="80" step="0.1"></div><div class="field"><label>Cadera (cm)</label><input id="p-hip" type="number" placeholder="95" step="0.1"></div></div><div class="field-row"><div class="field"><label>Cuello (cm)</label><input id="p-neck" type="number" placeholder="38" step="0.1"></div><div class="field"><label>% Grasa corporal</label><input id="p-fat" type="number" placeholder="auto" step="0.1"></div></div></div>
+    <div class="sec-title">Actividad física</div>
+    <div class="card card-pad"><label style="font-size:12px;font-weight:600;color:var(--t2);display:block;margin-bottom:8px;">Nivel de actividad</label><div class="radio-row" id="activ-opts"><div class="radio-opt on" data-val="1.2" onclick="selRadio(this,'activ-opts')">Sedentario</div><div class="radio-opt" data-val="1.375" onclick="selRadio(this,'activ-opts')">Ligero</div><div class="radio-opt" data-val="1.55" onclick="selRadio(this,'activ-opts')">Moderado</div><div class="radio-opt" data-val="1.725" onclick="selRadio(this,'activ-opts')">Intenso</div><div class="radio-opt" data-val="1.9" onclick="selRadio(this,'activ-opts')">Extremo</div></div></div>
+    <div class="sec-title">Objetivo</div>
+    <div class="card card-pad"><div class="radio-row" id="goal-opts"><div class="radio-opt on" data-val="cut" onclick="selRadio(this,'goal-opts')">💪 Perder grasa</div><div class="radio-opt" data-val="bulk" onclick="selRadio(this,'goal-opts')">🏋️ Ganar músculo</div><div class="radio-opt" data-val="maint" onclick="selRadio(this,'goal-opts')">⚖️ Mantenimiento</div><div class="radio-opt" data-val="perf" onclick="selRadio(this,'goal-opts')">🚀 Rendimiento</div></div></div>
+    <div class="sec-title">Objetivos nutricionales calculados</div>
+    <div class="card" id="macro-detail-card"><div style="padding:14px 16px;text-align:center;color:var(--t3);font-size:13px;">Completa tus datos y guarda para calcular</div></div>
+    <div style="padding:0 0 16px;"><button class="btn btn-primary" onclick="saveProfile()">Guardar y calcular</button></div>
+  </div>
+  <div class="bnav"><button class="bnav-item" onclick="navTo('s-home',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></button><button class="bnav-item" onclick="goScan()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Escanear</span></button><button class="bnav-item" onclick="navTo('s-diary',this);renderDiary()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>Diario</span></button><button class="bnav-item on"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Perfil</span></button><button class="bnav-item" onclick="navTo('s-track',this);renderTracking()"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Seguimiento</span></button></div>
+</div>
+<!-- DIARY -->
+<div id="s-diary" class="screen">
+  <div class="hdr"><div style="display:flex;align-items:center;gap:10px;"><div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><span class="logo-name">Mi <b>Alimentación</b></span></div><div style="display:flex;gap:6px;"><button class="ico-btn" onclick="changeDay(-1)"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button><button class="ico-btn" id="diary-date-btn" onclick="changeDay(0)" style="width:auto;padding:0 10px;font-size:12px;font-weight:600;color:var(--t2);">Hoy</button><button class="ico-btn" onclick="changeDay(1)"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button></div></div>
+  <div class="scroll"><div class="ring-wrap" id="diary-rings"></div><div id="diary-meals"></div></div>
+  <div class="bnav"><button class="bnav-item" onclick="navTo('s-home',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></button><button class="bnav-item" onclick="goScan()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Escanear</span></button><button class="bnav-item on"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>Diario</span></button><button class="bnav-item" onclick="navTo('s-profile',this);renderProfile()"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Perfil</span></button><button class="bnav-item" onclick="navTo('s-track',this);renderTracking()"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Seguimiento</span></button></div>
+</div>
+<!-- TRACKING -->
+<div id="s-track" class="screen">
+  <div class="hdr"><div style="display:flex;align-items:center;gap:10px;"><div class="logo-mark" style="background:linear-gradient(135deg,var(--b1),var(--b2))"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><span class="logo-name">Segui<b>miento</b></span></div><button class="ico-btn" onclick="openMeasureModal()"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg></button></div>
+  <div class="scroll"><div class="track-date-strip" id="track-strip"></div><div id="track-content"></div></div>
+  <div class="bnav"><button class="bnav-item" onclick="navTo('s-home',this)"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Inicio</span></button><button class="bnav-item" onclick="goScan()"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/></svg><span>Escanear</span></button><button class="bnav-item" onclick="navTo('s-diary',this);renderDiary()"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg><span>Diario</span></button><button class="bnav-item" onclick="navTo('s-profile',this);renderProfile()"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Perfil</span></button><button class="bnav-item on"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Seguimiento</span></button></div>
+</div>
+<!-- MODALS -->
+<div class="overlay" id="m-info">
+  <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title">Calificación de productos</span><button class="modal-close" onclick="closeModal('m-info')">×</button></div>
+  <div class="modal-body">
+    <p style="font-size:14px;color:var(--t2);line-height:1.65;margin-bottom:16px;">La puntuación se basa en tres criterios científicos independientes.</p>
+    <div style="background:var(--bg);border-radius:var(--radius2);padding:14px;margin-bottom:12px;"><div style="font-size:14px;font-weight:700;margin-bottom:6px;">1 — Calidad nutricional <span style="font-weight:400;color:var(--t2)">(60%)</span></div><div style="font-size:13px;color:var(--t2);line-height:1.6;">Basado en Nutri-Score: calorías, azúcar, sal, grasas saturadas, proteínas, fibra, frutas y verduras.</div></div>
+    <div style="background:var(--bg);border-radius:var(--radius2);padding:14px;margin-bottom:12px;"><div style="font-size:14px;font-weight:700;margin-bottom:8px;">2 — Aditivos <span style="font-weight:400;color:var(--t2)">(30%)</span></div><div style="display:flex;flex-direction:column;gap:7px;"><div style="display:flex;align-items:center;gap:10px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--r1);flex-shrink:0;"></div><span style="font-size:13px;"><b>De riesgo</b> — Rojo</span></div><div style="display:flex;align-items:center;gap:10px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--o1);flex-shrink:0;"></div><span style="font-size:13px;"><b>Riesgo medio</b> — Naranja</span></div><div style="display:flex;align-items:center;gap:10px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--y1);flex-shrink:0;"></div><span style="font-size:13px;"><b>Riesgo limitado</b> — Amarillo</span></div><div style="display:flex;align-items:center;gap:10px;"><div style="width:10px;height:10px;border-radius:50%;background:var(--g1);flex-shrink:0;"></div><span style="font-size:13px;"><b>Sin riesgo</b> — Verde</span></div></div></div>
+    <div style="background:var(--bg);border-radius:var(--radius2);padding:14px;margin-bottom:14px;"><div style="font-size:14px;font-weight:700;margin-bottom:6px;">3 — Dimensión ecológica <span style="font-weight:400;color:var(--t2)">(10%)</span></div><div style="font-size:13px;color:var(--t2);line-height:1.6;">Productos con certificación ecológica (Eurohoja/USDA Organic) reducen exposición a pesticidas.</div></div>
+    <div style="display:flex;flex-direction:column;gap:8px;"><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:12px;padding:12px;"><span style="font-size:22px;">🇪🇺</span><div><b style="display:block;font-size:13px;">EFSA</b><span style="font-size:12px;color:var(--t2);">Autoridad Europea de Seguridad Alimentaria</span></div></div><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:12px;padding:12px;"><span style="font-size:22px;">🔬</span><div><b style="display:block;font-size:13px;">ANSES</b><span style="font-size:12px;color:var(--t2);">Agencia Francesa de Seguridad Sanitaria</span></div></div><div style="display:flex;align-items:center;gap:12px;background:var(--bg);border-radius:12px;padding:12px;"><span style="font-size:22px;">🏥</span><div><b style="display:block;font-size:13px;">IARC / CIIC</b><span style="font-size:12px;color:var(--t2);">Centro Internacional de Investigación sobre el Cáncer</span></div></div></div>
+    <p style="font-size:11px;color:var(--t3);margin-top:14px;line-height:1.6;">Datos: Open Food Facts &amp; Open Beauty Facts. La calificación es orientativa y no substituye consejo médico.</p>
+  </div></div>
+</div>
+
+<div class="overlay" id="m-adddiary">
+  <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title">Añadir al diario</span><button class="modal-close" onclick="closeModal('m-adddiary')">×</button></div>
+  <div class="modal-body">
+    <div id="add-prod-info" style="background:var(--bg);border-radius:var(--radius2);padding:12px;margin-bottom:14px;font-size:13px;font-weight:600;"></div>
+    <div class="field"><label>Comida</label><select id="add-meal-sel"><option value="breakfast">🌅 Desayuno</option><option value="morning">🍎 Media mañana</option><option value="lunch">☀️ Almuerzo</option><option value="snack">🍊 Merienda</option><option value="dinner">🌙 Cena</option><option value="preworkout">⚡ Pre-entreno</option><option value="postworkout">💪 Post-entreno</option></select></div>
+    <div class="field"><label>Cantidad (g / ml)</label><input id="add-qty" type="number" value="100" min="1" max="2000"></div>
+    <div id="add-nutri-preview" style="background:var(--bg);border-radius:var(--radius2);padding:12px;margin-bottom:14px;font-size:13px;color:var(--t2);"></div>
+    <button class="btn btn-primary" onclick="confirmAddDiary()">Añadir al diario</button>
+  </div></div>
+</div>
+
+<div class="overlay" id="m-addmeal">
+  <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title" id="addmeal-title">Añadir alimento</span><button class="modal-close" onclick="closeModal('m-addmeal')">×</button></div>
+  <div class="modal-body">
+    <!-- Source tabs -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button class="mtab on" id="tab-scanned" onclick="switchAddTab('scanned')" style="flex:1;text-align:center;">📦 Escaneados</button>
+      <button class="mtab" id="tab-natural" onclick="switchAddTab('natural')" style="flex:1;text-align:center;">🥦 Naturales</button>
+    </div>
+    <!-- Search -->
+    <div class="field"><input id="addmeal-search" placeholder="Buscar alimento…" oninput="filterAddMealList()"></div>
+    <!-- Category filter — only visible on natural tab -->
+    <div id="natural-cats" style="display:none;overflow-x:auto;white-space:nowrap;scrollbar-width:none;margin-bottom:10px;padding-bottom:2px;">
+      <button class="mtab on" onclick="selectNatCat('',this)" style="margin-right:6px;">Todos</button>
+      <button class="mtab" onclick="selectNatCat('verdura',this)" style="margin-right:6px;">🥬 Verduras</button>
+      <button class="mtab" onclick="selectNatCat('hortaliza',this)" style="margin-right:6px;">🥕 Hortalizas</button>
+      <button class="mtab" onclick="selectNatCat('fruta',this)" style="margin-right:6px;">🍎 Frutas</button>
+      <button class="mtab" onclick="selectNatCat('legumbre',this)" style="margin-right:6px;">🫘 Legumbres</button>
+      <button class="mtab" onclick="selectNatCat('cereal',this)" style="margin-right:6px;">🌾 Cereales</button>
+      <button class="mtab" onclick="selectNatCat('proteina',this)" style="margin-right:6px;">🥩 Proteínas</button>
+      <button class="mtab" onclick="selectNatCat('lacteo',this)" style="margin-right:6px;">🥛 Lácteos</button>
+      <button class="mtab" onclick="selectNatCat('grasa',this)" style="margin-right:6px;">🥑 Grasas</button>
+      <button class="mtab" onclick="selectNatCat('fruto_seco',this)" style="margin-right:6px;">🥜 Frutos secos</button>
+    </div>
+    <!-- List -->
+    <div id="addmeal-list" style="max-height:240px;overflow-y:auto;background:var(--bg);border-radius:var(--radius2);margin-bottom:14px;"></div>
+    <!-- Qty + confirm -->
+    <div id="addmeal-qty-wrap" style="display:none;">
+      <div style="background:var(--bg);border-radius:var(--radius2);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--t2);" id="addmeal-nutri-preview"></div>
+      <div class="field"><label>Cantidad (g / ml)</label><input id="addmeal-qty" type="number" value="100" min="1" oninput="updateAddMealPreview()"></div>
+      <button class="btn btn-primary" onclick="confirmMealAdd()">Añadir a la comida</button>
+    </div>
+  </div></div>
+</div>
+
+<!-- MEASURE MODAL — extended -->
+<div class="overlay" id="m-addmeasure">
+  <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title">Registrar medidas</span><button class="modal-close" onclick="closeModal('m-addmeasure')">×</button></div>
+  <div class="modal-body">
+    <div style="background:var(--bg);border-radius:var(--radius2);padding:10px 14px;margin-bottom:14px;font-size:13px;font-weight:600;color:var(--t2);" id="measure-date-label"></div>
+    <div class="sec-title" style="margin-top:0;">Composición corporal</div>
+    <div class="field-row"><div class="field"><label>Peso (kg)</label><input id="m-weight" type="number" step="0.1" placeholder="70.5"></div><div class="field"><label>% Grasa corporal</label><input id="m-bodyfat" type="number" step="0.1" placeholder="20"></div></div>
+    <div class="field-row"><div class="field"><label>% Músculo</label><input id="m-muscle" type="number" step="0.1" placeholder="40"></div></div>
+    <div class="sec-title">Medidas antropométricas</div>
+    <div class="field-row"><div class="field"><label>Cintura (cm)</label><input id="m-waist" type="number" step="0.1" placeholder="80"></div><div class="field"><label>Cadera (cm)</label><input id="m-hip" type="number" step="0.1" placeholder="95"></div></div>
+    <div class="sec-title">Rendimiento físico</div>
+    <div class="field-row"><div class="field"><label>FC reposo (bpm)</label><input id="m-hr" type="number" placeholder="65"></div><div class="field"><label>Pasos del día</label><input id="m-steps" type="number" placeholder="8000"></div></div>
+    <div class="field-row"><div class="field"><label>Horas de sueño</label><input id="m-sleep" type="number" step="0.5" placeholder="7.5"></div><div class="field"><label>Calidad sueño (1-10)</label><input id="m-sleep-q" type="number" min="1" max="10" placeholder="7"></div></div>
+    <div class="field-row"><div class="field"><label>Energía subjetiva (1-10)</label><input id="m-energy" type="number" min="1" max="10" placeholder="8"></div><div class="field"><label>Estrés (1-10)</label><input id="m-stress" type="number" min="1" max="10" placeholder="4"></div></div>
+    <div class="sec-title">Notas</div>
+    <div class="field"><input id="m-notes" placeholder="Cómo te sientes hoy, notas del entreno…"></div>
+    <button class="btn btn-primary" onclick="saveMeasures()">Guardar medidas</button>
+  </div></div>
+</div>
+
+<!-- ALT DETAIL MODAL -->
+<div class="overlay" id="m-altdetail">
+  <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title" id="alt-detail-name">Alternativa</span><button class="modal-close" onclick="closeModal('m-altdetail')">×</button></div>
+  <div class="modal-body" id="alt-detail-body"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+// ═══════════════════════════════════════════════
+//  STORAGE
+// ═══════════════════════════════════════════════
+const LS={get:k=>{try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},set:(k,v)=>localStorage.setItem(k,JSON.stringify(v))};
+const KEY_HIST='ns_hist',KEY_PROF='ns_prof',KEY_DIARY='ns_diary',KEY_MEAS='ns_meas',KEY_CHECKS='ns_checks';
+let history=LS.get(KEY_HIST)||[];
+let profile=LS.get(KEY_PROF)||{};
+let diaryData=LS.get(KEY_DIARY)||{};
+let measLog=LS.get(KEY_MEAS)||[];   // [{date, weight, bodyfat, muscle, water, waist, hip, chest, neck, arm_l, arm_r, thigh_l, thigh_r, calf_l, calf_r, bp_sys, bp_dia, hr, steps, sleep, sleep_q, energy, stress, notes}]
+let checksLog=LS.get(KEY_CHECKS)||{};
+let scanType='food',quaggaOn=false,lastDet=0,diaryDayOffset=0;
+let diaryCurrentDate=todayStr(),trackDate=todayStr();
+let currentProduct=null;
+
+function todayStr(){return new Date().toISOString().slice(0,10);}
+
+// ═══════════════════════════════════════════════
+//  NAV
+// ═══════════════════════════════════════════════
+function navTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+function goScan(){navTo('s-scan');initScanner();}
+
+// ═══════════════════════════════════════════════
+//  MODALS
+// ═══════════════════════════════════════════════
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.overlay').forEach(el=>el.addEventListener('click',e=>{if(e.target===el)el.classList.remove('open');}));
+
+// ═══════════════════════════════════════════════
+//  TOAST
+// ═══════════════════════════════════════════════
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600);}
+
+// ═══════════════════════════════════════════════
+//  SCANNER
+// ═══════════════════════════════════════════════
+function setScanType(t){scanType=t;document.getElementById('stp-food').classList.toggle('on',t==='food');document.getElementById('stp-cosm').classList.toggle('on',t==='cosm');}
+function initScanner(){
+  if(quaggaOn)return;
+  const wrap=document.getElementById('quagga-wrap');
+  const ex=wrap.querySelector('video');if(ex)ex.remove();
+
+  // Candidate codes buffer — require same code confirmed N times before firing
+  const CONFIRM_NEEDED=2;
+  const codeCounts={};
+
+  Quagga.init({
+    inputStream:{
+      type:'LiveStream',
+      target:wrap,
+      constraints:{
+        facingMode:'environment',
+        width:{ideal:1280},
+        height:{ideal:720},
+        aspectRatio:{ideal:1.7778},
+        // Request continuous autofocus and high-quality mode where supported
+        advanced:[{focusMode:'continuous'},{torch:false}]
+      },
+      area:{ top:'20%', right:'5%', bottom:'20%', left:'5%' },
+    },
+    decoder:{
+      readers:[
+        'ean_reader',
+        'ean_8_reader',
+        'upc_reader',
+        'upc_e_reader',
+        'code_128_reader',
+        'code_39_reader',
+        'i2of5_reader',
+      ],
+      // Multiple passes per frame increases detection rate
+      multiple:false,
+    },
+    locate:true,
+    numOfWorkers:0,
+    frequency:15,           // process 15 frames/s — faster than default 10
+    locator:{
+      patchSize:'medium',   // 'small' misses wide barcodes; 'medium' best balance
+      halfSample:false,     // full resolution → better accuracy
+    },
+  },err=>{
+    if(err){
+      // Fallback: try lower constraints if camera rejected advanced
+      Quagga.init({
+        inputStream:{type:'LiveStream',target:wrap,constraints:{facingMode:'environment',width:1280,height:720}},
+        decoder:{readers:['ean_reader','ean_8_reader','upc_reader','upc_e_reader','code_128_reader']},
+        locate:true,numOfWorkers:0,frequency:12,
+      },err2=>{
+        if(err2){toast('Cámara no disponible. Usa código manual.');return;}
+        startQuaggaListeners(codeCounts,CONFIRM_NEEDED);
+      });
+      return;
+    }
+    startQuaggaListeners(codeCounts,CONFIRM_NEEDED);
+  });
+}
+
+function startQuaggaListeners(codeCounts,CONFIRM_NEEDED){
+  Quagga.start();
+  quaggaOn=true;
+
+  // onProcessed: draw a green box on confirmed barcode in viewfinder
+  Quagga.onProcessed(result=>{
+    const ctx=Quagga.canvas.ctx.overlay;
+    const canvas=Quagga.canvas.dom.overlay;
+    if(!ctx||!canvas)return;
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    if(result&&result.boxes){
+      result.boxes.filter(b=>b!==result.box).forEach(b=>{
+        Quagga.ImageDebug.drawPath(b,{x:0,y:1},ctx,{color:'rgba(255,255,255,0.15)',lineWidth:1});
+      });
+    }
+    if(result&&result.box){
+      Quagga.ImageDebug.drawPath(result.box,{x:0,y:1},ctx,{color:'#16C79A',lineWidth:3});
+    }
+    if(result&&result.codeResult&&result.codeResult.code){
+      Quagga.ImageDebug.drawPath(result.line,{x:'x',y:'y'},ctx,{color:'#16C79A',lineWidth:3});
+    }
+  });
+
+  Quagga.onDetected(data=>{
+    const code=data.codeResult.code;
+    if(!code||code.length<8)return;
+    // Confidence check: Quagga reports decodedCodes with error rates
+    const errors=data.codeResult.decodedCodes
+      .filter(c=>c.error!==undefined)
+      .map(c=>c.error);
+    const avgError=errors.length?errors.reduce((a,b)=>a+b,0)/errors.length:1;
+    if(avgError>0.18)return; // skip low-confidence reads
+
+    // Confirm buffer: same code must appear CONFIRM_NEEDED times
+    codeCounts[code]=(codeCounts[code]||0)+1;
+    if(codeCounts[code]<CONFIRM_NEEDED)return;
+
+    // Debounce: don't re-fire same code within 4s
+    const now=Date.now();
+    if(now-lastDet<4000)return;
+    lastDet=now;
+    Object.keys(codeCounts).forEach(k=>delete codeCounts[k]);
+
+    fetchProduct(code,scanType);
+  });
+}
+
+function stopScan(){
+  if(quaggaOn){
+    try{Quagga.offDetected();Quagga.offProcessed();}catch(e){}
+    try{Quagga.stop();}catch(e){}
+    quaggaOn=false;
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  FETCH — multi-source with better name extraction
+// ═══════════════════════════════════════════════
+async function fetchProduct(code,type){
+  code=String(code||'').trim();
+  if(!code||code.length<5){toast('Código inválido');return;}
+  type=type||scanType;
+  stopScan();
+  navTo('s-loading');
+
+  // Build ordered endpoint list — v2 API returns richer fields including nutriscore
+  const foodEndpoints=[
+    `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,product_name_en,product_name_fr,generic_name,abbreviated_product_name,brands,categories_tags,labels_tags,nutriscore_grade,nutrition_grade_fr,ecoscore_grade,nutriments,additives_tags,additives_original_tags,image_thumb_url,image_small_url,image_url,ingredients_text,code`,
+    `https://es.openfoodfacts.org/api/v2/product/${code}.json`,
+    `https://fr.openfoodfacts.org/api/v2/product/${code}.json`,
+    `https://world.openfoodfacts.org/api/v0/product/${code}.json`,
+  ];
+  const cosmEndpoints=[
+    `https://world.openbeautyfacts.org/api/v2/product/${code}.json`,
+    `https://world.openbeautyfacts.org/api/v0/product/${code}.json`,
+  ];
+
+  const ordered = type==='cosm'
+    ? [...cosmEndpoints,...foodEndpoints]
+    : [...foodEndpoints,...cosmEndpoints];
+
+  const ctrl=new AbortController();
+  // Per-request timeout of 5s, total cap 18s
+  let found=null;
+  const totalDeadline=Date.now()+18000;
+
+  try{
+    for(const url of ordered){
+      if(Date.now()>totalDeadline)break;
+      const reqCtrl=new AbortController();
+      const reqTo=setTimeout(()=>reqCtrl.abort(),5000);
+      try{
+        const res=await fetch(url,{signal:reqCtrl.signal,cache:'default'});
+        clearTimeout(reqTo);
+        if(!res.ok)continue;
+        const data=await res.json();
+        const prod=data.product||data; // v2 returns {product:{...}}, v0 also
+        // v2 wraps in {status,product}, v0 same shape
+        const ok=data.status===1||(prod&&(prod.product_name||prod.product_name_es||prod.brands||prod.nutriments));
+        if(ok&&prod&&typeof prod==='object'&&Object.keys(prod).length>2){
+          found=prod;
+          found._scanType=url.includes('beauty')?'cosm':type;
+          break;
+        }
+      }catch(fe){
+        clearTimeout(reqTo);
+        if(ctrl.signal.aborted)break;
+        // network error on this endpoint → try next
+      }
+    }
+
+    if(found){
+      renderResult(found);
+    }else{
+      toast('Producto no encontrado. Prueba con el código manual.');
+      navTo('s-scan');initScanner();
+    }
+  }catch(e){
+    toast('Error de conexión. Verifica tu red.');
+    navTo('s-scan');initScanner();
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  SCORE ENGINE
+// ═══════════════════════════════════════════════
+function scoreProduct(p){
+  const n=p.nutriments||{};
+  // Better nutrition score: use nutriscore if available, else calculate from nutrients
+  let nutritionPts=30;
+  const ns=(p.nutriscore_grade||p.nutrition_grade_fr||'').toLowerCase();
+  const nsMap={a:60,b:48,c:36,d:20,e:5};
+  if(nsMap[ns]) nutritionPts=nsMap[ns];
+  else if(Object.keys(n).length>0){
+    // Fallback calculation if no nutriscore
+    const kcal=n['energy-kcal_100g']||n['energy_100g']*0.239||0;
+    const sugars=n['sugars_100g']||0;const satfat=n['saturated-fat_100g']||0;
+    const salt=n['salt_100g']||0;const fiber=n['fiber_100g']||0;const prot=n['proteins_100g']||0;
+    let pts=50;
+    pts-=Math.min(20,kcal/100*4);pts-=Math.min(15,sugars*1.5);pts-=Math.min(10,satfat*2);pts-=Math.min(10,salt*5);
+    pts+=Math.min(10,fiber*2);pts+=Math.min(10,prot*0.5);
+    nutritionPts=Math.max(5,Math.min(60,Math.round(pts)));
+  }
+  const DANGER={'en:e621':3,'en:e951':3,'en:e950':3,'en:e211':3,'en:e102':3,'en:e110':3,'en:e122':3,'en:e129':3,'en:e171':3,'en:e250':3,'en:e252':3,'en:e320':3,'en:e321':3,'en:e407':2,'en:e955':2,'en:e220':2,'en:e120':1};
+  let addPenalty=0;
+  (p.additives_tags||[]).forEach(a=>{addPenalty+=(DANGER[a]||0.4);});
+  const addPts=Math.max(0,30-Math.min(30,addPenalty*4));
+  const labels=(p.labels_tags||[]).join(' ');
+  const organic=labels.includes('organic')||labels.includes('bio')||labels.includes('ecol');
+  const ecoMap={a:10,b:8,c:6,d:3,e:1};
+  const ecoPts=ecoMap[(p.ecoscore_grade||'').toLowerCase()]||(organic?8:4);
+  return{total:Math.min(100,Math.round(nutritionPts+addPts+ecoPts)),nutrition:Math.round(nutritionPts),additives:Math.round(addPts),eco:Math.round(ecoPts),nsGrade:ns||'?'};
+}
+function scoreCosmetic(p){
+  const ings=(p.ingredients_text||'').toLowerCase();
+  const DANGER_INGR=['parabens','paraben','formaldehyde','triclosan','phthalate','sodium lauryl sulfate','bha','bht','oxybenzone','retinyl palmitate','hydroquinone','lead','mercury'];
+  const MOD_INGR=['alcohol denat','fragrance','parfum','dye','color','talc','mineral oil','petrolatum'];
+  let bad=0,mod=0;
+  DANGER_INGR.forEach(d=>{if(ings.includes(d))bad++;});
+  MOD_INGR.forEach(m=>{if(ings.includes(m))mod++;});
+  const total=Math.max(0,Math.min(100,85-bad*15-mod*5));
+  return{total,bad,mod};
+}
+function scoreColor(s){
+  if(s>=75)return{color:'var(--g1)',bg:'var(--g3)',label:'Excelente',desc:'Composición muy buena. Puedes consumirlo con regularidad.'};
+  if(s>=50)return{color:'var(--y1)',bg:'var(--y3)',label:'Bueno',desc:'Composición correcta. Sin restricciones particulares.'};
+  if(s>=25)return{color:'var(--o1)',bg:'var(--o3)',label:'Moderado',desc:'Composición mediocre. Limita su consumo cuando sea posible.'};
+  return{color:'var(--r1)',bg:'var(--r3)',label:'Malo',desc:'Composición pobre. Te recomendamos evitarlo o buscar alternativas.'};
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER RESULT
+// ═══════════════════════════════════════════════
+function getBestName(p){
+  return p.product_name_es||p.product_name_fr||p.product_name_en||p.product_name||p.generic_name||p.abbreviated_product_name||'Producto desconocido';
+}
+function renderResult(p){
+  currentProduct=p;
+  const isFood=p._scanType!=='cosm';
+  const name=getBestName(p);
+  const brand=p.brands||'';
+  document.getElementById('res-name').textContent=name;
+  document.getElementById('res-brand').textContent=brand;
+  const thumb=document.getElementById('res-thumb');
+  if(p.image_thumb_url||p.image_small_url||p.image_url){
+    thumb.innerHTML=`<img src="${p.image_thumb_url||p.image_small_url||p.image_url}" onerror="this.parentElement.textContent='${isFood?'🥗':'💄'}'">`;
+  }else{thumb.textContent=isFood?'🥗':'💄';}
+  const score=isFood?scoreProduct(p):scoreCosmetic(p);
+  const sc=scoreColor(score.total);
+  const scroll=document.getElementById('res-scroll');
+  scroll.innerHTML='';
+  // Score card
+  const scard=document.createElement('div');
+  scard.className='score-card';
+  scard.innerHTML=`<div class="sc-ring" style="border-color:${sc.color};color:${sc.color}"><div class="sc-n">${score.total}</div><div class="sc-max">/100</div></div><div class="sc-lbl" style="color:${sc.color}">${sc.label}</div><div class="sc-desc">${sc.desc}</div>`;
+  scroll.appendChild(scard);
+  if(isFood){
+    // Breakdown
+    const bcard=document.createElement('div');bcard.className='card';
+    const brows=[{ico:'🥗',icobg:'var(--g3)',title:'Calidad nutricional',sub:'60% de la calificación',pts:score.nutrition,max:60},{ico:'⚗️',icobg:'var(--y3)',title:'Aditivos',sub:'30% de la calificación',pts:score.additives,max:30},{ico:'🌿',icobg:'var(--g3)',title:'Dimensión ecológica',sub:'10% de la calificación',pts:score.eco,max:10}];
+    bcard.innerHTML=brows.map(r=>{const pct=Math.round((r.pts/r.max)*100);const bc=pct>=65?'var(--g1)':pct>=40?'var(--y1)':pct>=20?'var(--o1)':'var(--r1)';return`<div class="bd-row"><div class="bd-ico" style="background:${r.icobg}">${r.ico}</div><div class="bd-info"><div class="bd-title">${r.title}</div><div class="bd-sub">${r.sub}</div><div class="bd-bar-w"><div class="bd-bar" style="width:0%;background:${bc}" data-w="${pct}"></div></div></div><div class="bd-pct" style="color:${bc}">${pct}%</div></div>`;}).join('');
+    scroll.appendChild(bcard);
+    setTimeout(()=>{bcard.querySelectorAll('.bd-bar').forEach(b=>b.style.width=b.dataset.w+'%');},80);
+    // Nutri-Score
+    const nscard=document.createElement('div');nscard.className='card card-pad';
+    nscard.innerHTML=`<div style="font-size:12px;color:var(--t2);margin-bottom:10px;font-weight:600;">NUTRI-SCORE</div><div class="ns-bar" id="ns-bar-r"></div>`;
+    scroll.appendChild(nscard);
+    setTimeout(()=>{
+      const grades=['a','b','c','d','e'],cols={a:'#1a8a39',b:'#7dc142',c:'#f5c518',d:'#e87722',e:'#d63a2f'};
+      const g=score.nsGrade.toLowerCase();
+      document.getElementById('ns-bar-r').innerHTML=grades.map(x=>`<div class="ns-letter" style="background:${x===g?cols[x]:'#E8EDF2'};color:${x===g?'white':'#b0b8c4'};font-size:${x===g?'18px':'14px'};transform:${x===g?'scaleY(1.14)':'none'}">${x.toUpperCase()}</div>`).join('');
+    },100);
+    scroll.appendChild(buildNutritionTable(p.nutriments||{}));
+    scroll.appendChild(buildAdditives(p.additives_tags||[]));
+  }else{
+    renderCosmeticResult(p,score,scroll);
+  }
+  // Alternatives — NOW CLICKABLE with detail modal
+  renderAlternatives(p,isFood,scroll);
+  // Save history
+  history=history.filter(h=>h.code!==(p.code||p._id));
+  history.unshift({code:p.code||p._id,name,brand,score:score.total,type:p._scanType||'food',date:Date.now(),product:p});
+  history=history.slice(0,30);
+  LS.set(KEY_HIST,history);
+  renderHistory();
+  navTo('s-result');
+}
+
+// ═══════════════════════════════════════════════
+//  ALTERNATIVES — clickable, open detail modal
+// ═══════════════════════════════════════════════
+const FOOD_ALTS=[
+  {e:'🥜',n:'Mantequilla de almendras natural',b:'Bio Artisan',s:88,kcal:614,prot:21,carb:19,fat:54,fiber:10,desc:'100% almendras sin aditivos. Alta en grasas saludables monoinsaturadas, vitamina E y magnesio. Excelente para el desayuno.',adds:[]},
+  {e:'🌾',n:'Avena integral sin azúcar',b:'Quaker Natural',s:92,kcal:379,prot:14,carb:66,fat:7,fiber:9,desc:'Fuente excepcional de beta-glucanos que reducen el colesterol. Alto índice de saciedad. Sin aditivos.',adds:[]},
+  {e:'🍫',n:'Chocolate negro 85% cacao',b:'Lindt Excellence',s:74,kcal:598,prot:9,carb:18,fat:52,fiber:12,desc:'Rico en flavonoides antioxidantes. Bajo en azúcar. Aporta magnesio, hierro y zinc. Consumo moderado recomendado.',adds:['en:e322']},
+  {e:'🫐',n:'Granola sin azúcar añadida',b:'Veritas Bio',s:83,kcal:420,prot:10,carb:55,fat:16,fiber:8,desc:'Elaborada con copos de avena, semillas y frutos secos. Sin azúcares añadidos, sin conservantes artificiales.',adds:[]},
+  {e:'🐟',n:'Atún en agua sin sal',b:'Calvo Natural',s:91,kcal:108,prot:24,carb:0,fat:1,fiber:0,desc:'Proteína magra de alta calidad. Rico en omega-3, vitamina D y selenio. Sin sal añadida.',adds:[]},
+  {e:'🫙',n:'Yogur griego natural 0%',b:'Danone Oikos',s:79,kcal:97,prot:10,carb:4,fat:0.5,fiber:0,desc:'Fuente excelente de calcio y proteínas. Probióticos que mejoran la microbiota intestinal.',adds:[]},
+  {e:'🥚',n:'Huevos camperos ecológicos',b:'Cal Valls',s:86,kcal:148,prot:13,carb:1,fat:10,fiber:0,desc:'Proteína completa con todos los aminoácidos esenciales. Ricos en colina, vitamina B12 y luteína.',adds:[]},
+  {e:'🥑',n:'Crema de aguacate natural',b:'Florette',s:81,kcal:160,prot:2,carb:4,fat:15,fiber:5,desc:'Grasas monoinsaturadas saludables para el corazón. Rica en potasio, folato y vitamina K.',adds:[]},
+];
+const COSM_ALTS=[
+  {e:'🌿',n:'Crema hidratante BIO',b:'Weleda',s:91,desc:'Formulación 100% natural certificada BDIH. Sin parabenos, sin PEG, sin fragancias sintéticas. Ingredientes orgánicos.',adds:[]},
+  {e:'☀️',n:'Protector solar mineral SPF50',b:'Badger',s:87,desc:'Filtro solar mineral de óxido de zinc. Sin oxybenzone. Seguro para pieles sensibles y ecosistemas marinos.',adds:[]},
+  {e:'🍃',n:'Champú sin sulfatos',b:'Urtekram',s:85,desc:'Libre de SLS/SLES. Certificado Ecocert. pH equilibrado para cabello fino o teñido. Base de aloe vera.',adds:[]},
+  {e:'💧',n:'Sérum vitamina C 10%',b:'Pai Skincare',s:80,desc:'Vitamina C estabilizada de origen natural. Sin fragancia. Apto para pieles reactivas. Certificado orgánico.',adds:[]},
+];
+
+function renderAlternatives(p,isFood,scroll){
+  const sec=document.createElement('div');
+  sec.innerHTML=`<div class="sec-title" style="padding:0 2px">Mejores alternativas</div>`;
+  scroll.appendChild(sec);
+  const wrap=document.createElement('div');wrap.className='alts-wrap';
+  const pool=isFood?FOOD_ALTS:COSM_ALTS;
+  const alts=pool.sort(()=>.5-Math.random()).slice(0,4);
+  wrap.innerHTML=alts.map((a,i)=>{
+    const asc=scoreColor(a.s);
+    return `<div class="alt-card" onclick="showAltDetail(${i},'${isFood?'food':'cosm'}')">
+      <div class="alt-emo">${a.e}</div>
+      <div class="alt-name">${a.n}</div>
+      <div class="alt-brand">${a.b}</div>
+      <div class="pill" style="background:${asc.bg};color:${asc.color};font-size:11px">${a.s} · ${asc.label}</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--g1);font-weight:600;">Ver detalles →</div>
+    </div>`;
+  }).join('');
+  // store current alts for detail modal
+  window._currentAlts=alts;window._currentAltsType=isFood?'food':'cosm';
+  scroll.appendChild(wrap);
+}
+
+function showAltDetail(idx,type){
+  const a=window._currentAlts[idx];if(!a)return;
+  const sc=scoreColor(a.s);
+  document.getElementById('alt-detail-name').textContent=a.n;
+  const body=document.getElementById('alt-detail-body');
+  let html=`<div class="alt-detail-score"><div style="font-size:40px;margin-bottom:12px">${a.e}</div>
+    <div class="alt-detail-ring" style="border-color:${sc.color};color:${sc.color}">
+      <div style="font-size:28px;font-weight:800;line-height:1">${a.s}</div>
+      <div style="font-size:11px;opacity:.6">/100</div>
+    </div>
+    <div style="font-size:17px;font-weight:700;color:${sc.color};margin-top:10px">${sc.label}</div>
+    <div style="font-size:13px;color:var(--t2);margin-top:6px;text-align:center;line-height:1.5">${a.b}</div>
+  </div>`;
+  html+=`<div style="background:var(--bg);border-radius:var(--radius2);padding:14px;margin-bottom:14px;font-size:13px;color:var(--t2);line-height:1.65">${a.desc}</div>`;
+  if(type==='food'){
+    html+=`<div style="font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px">Valores por 100g</div>`;
+    html+=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">`;
+    const nv=[{l:'Calorías',v:a.kcal,u:'kcal'},{l:'Proteínas',v:a.prot,u:'g'},{l:'Hidratos',v:a.carb,u:'g'},{l:'Grasas',v:a.fat,u:'g'},{l:'Fibra',v:a.fiber,u:'g'}];
+    html+=nv.map(n=>`<div style="background:var(--bg);border-radius:10px;padding:12px;"><div style="font-size:18px;font-weight:800;color:var(--t1)">${n.v}<span style="font-size:11px;font-weight:500;color:var(--t2)">${n.u}</span></div><div style="font-size:11px;color:var(--t2);margin-top:2px">${n.l}</div></div>`).join('');
+    html+=`</div>`;
+  }
+  const addStatus=a.adds&&a.adds.length>0?`⚗️ ${a.adds.length} aditivo(s) de bajo riesgo`:'✅ Sin aditivos detectados';
+  html+=`<div style="display:flex;align-items:center;gap:8px;background:${a.adds&&a.adds.length?'var(--y3)':'var(--g3)'};border-radius:12px;padding:12px 14px;font-size:13px;font-weight:600;color:${a.adds&&a.adds.length?'var(--y2)':'var(--g2)'}">${addStatus}</div>`;
+  body.innerHTML=html;
+  openModal('m-altdetail');
+}
+
+// ═══════════════════════════════════════════════
+//  COSMETIC RESULT
+// ═══════════════════════════════════════════════
+function renderCosmeticResult(p,score,scroll){
+  const ings=(p.ingredients_text||'').split(/,|;/).map(s=>s.trim()).filter(Boolean);
+  const DANGER_MAP={'parabens':['alto','Disruptor endocrino potencial'],'paraben':['alto','Disruptor endocrino'],'formaldehyde':['alto','Posible carcinógeno'],'triclosan':['alto','Disruptor endocrino'],'phthalate':['alto','Disruptor endocrino'],'sodium lauryl sulfate':['medio','Irritante cutáneo'],'sls':['medio','Irritante cutáneo'],'bha':['alto','Disruptor endocrino potencial'],'bht':['medio','Antioxidante sintético controversial'],'oxybenzone':['alto','Disruptor endocrino'],'alcohol denat':['leve','Puede resecar la piel'],'fragrance':['leve','Posible alérgeno'],'parfum':['leve','Posible alérgeno'],'mineral oil':['leve','Derivado petróleo'],'talc':['leve','Controversia asbestos']};
+  const RISK_CFG={alto:{dot:'var(--r1)',bg:'var(--r3)',lbl:'De riesgo'},medio:{dot:'var(--o1)',bg:'var(--o3)',lbl:'Moderado'},leve:{dot:'var(--y1)',bg:'var(--y3)',lbl:'Limitado'},ok:{dot:'var(--g1)',bg:'var(--g3)',lbl:'Sin riesgo'}};
+  const sec=document.createElement('div');
+  sec.innerHTML=`<div class="sec-title" style="padding:0 2px">Análisis de ingredientes</div>`;
+  scroll.appendChild(sec);
+  if(!ings.length){const e=document.createElement('div');e.className='card card-pad';e.innerHTML='<div style="text-align:center;color:var(--t2);font-size:13px;">No se encontraron ingredientes listados.</div>';scroll.appendChild(e);return;}
+  const card=document.createElement('div');card.className='card';
+  card.innerHTML=ings.slice(0,25).map(ing=>{
+    const key=Object.keys(DANGER_MAP).find(k=>ing.toLowerCase().includes(k));
+    const[risk,desc]=key?DANGER_MAP[key]:['ok','Ingrediente seguro según evidencia científica actual'];
+    const r=RISK_CFG[risk]||RISK_CFG.ok;
+    return`<div class="ingr-item"><div class="ingr-dot" style="background:${r.dot}"></div><div><div class="ingr-name">${ing}</div><div class="ingr-desc">${desc}</div></div><div class="ingr-tag" style="background:${r.bg};color:${r.dot}">${r.lbl}</div></div>`;
+  }).join('');
+  scroll.appendChild(card);
+}
+
+// ═══════════════════════════════════════════════
+//  NUTRITION TABLE
+// ═══════════════════════════════════════════════
+const NUTRIENTS=[
+  {k:'energy-kcal_100g',alt:'energy_100g',lbl:'Energía',u:'kcal',altMult:0.239},
+  {k:'fat_100g',lbl:'Grasas totales',u:'g'},
+  {k:'saturated-fat_100g',lbl:'— Saturadas',u:'g',sub:true},
+  {k:'carbohydrates_100g',lbl:'Hidratos de carbono',u:'g'},
+  {k:'sugars_100g',lbl:'— Azúcares',u:'g',sub:true},
+  {k:'fiber_100g',lbl:'Fibra',u:'g'},
+  {k:'proteins_100g',lbl:'Proteínas',u:'g'},
+  {k:'salt_100g',lbl:'Sal',u:'g'},
+  {k:'sodium_100g',lbl:'Sodio',u:'mg',mult:1000},
+];
+const RDV={'energy-kcal_100g':2000,'fat_100g':70,'saturated-fat_100g':20,'carbohydrates_100g':260,'sugars_100g':90,'fiber_100g':30,'proteins_100g':50,'salt_100g':6,'sodium_100g':2300};
+const HIGH_BAD=['fat_100g','saturated-fat_100g','sugars_100g','salt_100g','sodium_100g'];
+const HIGH_GOOD=['fiber_100g','proteins_100g'];
+function buildNutritionTable(n){
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`<div class="sec-title" style="padding:0 2px">Información nutricional <span style="font-size:10px;color:var(--t3);">/100g</span></div>`;
+  const table=document.createElement('div');table.className='card';
+  table.innerHTML=`<div class="nt-row hd"><span class="nt-name">Nutriente</span><span class="nt-mini"></span><span class="nt-lv">Nivel</span><span class="nt-val">Cant.</span></div>`;
+  let hasData=false;
+  NUTRIENTS.forEach(nut=>{
+    let v=n[nut.k];
+    if(v===undefined&&nut.alt)v=n[nut.alt];
+    if(v===undefined)return;
+    hasData=true;
+    if(nut.altMult&&n[nut.k]===undefined)v=Math.round(v*nut.altMult);
+    if(nut.mult)v=Math.round(v*nut.mult);
+    const ref=RDV[nut.k]||100;
+    const pct=Math.min(100,Math.round((v/ref)*100));
+    let lv='',lvc='var(--t3)';
+    if(HIGH_BAD.includes(nut.k)){lv=pct<15?'Bajo':pct<35?'Moderado':'Alto';lvc=pct<15?'var(--g1)':pct<35?'var(--y1)':'var(--r1)';}
+    else if(HIGH_GOOD.includes(nut.k)){lv=pct>30?'Alto':pct>10?'Medio':'Bajo';lvc=pct>30?'var(--g1)':pct>10?'var(--y1)':'var(--o1)';}
+    const fc=lvc.replace('var(--','').replace(')','');
+    const fillMap={'g1':'#16C79A','r1':'#EF4444','y1':'#F59E0B','o1':'#F97316','t3':'#94A3B8'};
+    const fill=fillMap[fc]||'#94A3B8';
+    const row=document.createElement('div');row.className='nt-row';
+    if(nut.sub)row.style.paddingLeft='26px';
+    row.innerHTML=`<span class="nt-name" style="font-size:${nut.sub?'12px':'13px'};color:${nut.sub?'var(--t2)':'var(--t1)'}">${nut.lbl}</span><span class="nt-mini"><div class="nt-mini-bg"><div class="nt-mini-fill" style="width:${pct}%;background:${fill}"></div></div></span><span class="nt-lv" style="color:${lvc}">${lv}</span><span class="nt-val">${typeof v==='number'?v.toFixed(v>10?0:1):v}${nut.u}</span>`;
+    table.appendChild(row);
+  });
+  if(!hasData){table.innerHTML='<div style="padding:14px 16px;font-size:13px;color:var(--t2);text-align:center;">Valores nutricionales no disponibles en la base de datos.</div>';}
+  wrap.appendChild(table);return wrap;
+}
+
+// ═══════════════════════════════════════════════
+//  ADDITIVES DB
+// ═══════════════════════════════════════════════
+const ADD_DB={'en:e100':{n:'E100 – Curcumina',d:'Colorante natural del cúrcuma',r:'none'},'en:e102':{n:'E102 – Tartrazina',d:'Colorante amarillo artificial. Puede causar hiperactividad.',r:'high'},'en:e110':{n:'E110 – Amarillo Ocaso FCF',d:'Colorante artificial. Reacciones alérgicas posibles.',r:'high'},'en:e120':{n:'E120 – Carmín / Cochinilla',d:'Colorante rojo de origen animal.',r:'medium'},'en:e122':{n:'E122 – Azorrubina',d:'Colorante rojo artificial.',r:'high'},'en:e129':{n:'E129 – Rojo Allura AC',d:'Posible hiperactividad en niños.',r:'high'},'en:e160a':{n:'E160a – Betacaroteno',d:'Colorante natural, precursor vitamina A.',r:'none'},'en:e200':{n:'E200 – Ácido sórbico',d:'Conservante antimicrobiano natural.',r:'low'},'en:e202':{n:'E202 – Sorbato de potasio',d:'Conservante. Puede causar reacciones cutáneas.',r:'low'},'en:e211':{n:'E211 – Benzoato de sodio',d:'Con vitamina C puede generar benceno cancerígeno.',r:'high'},'en:e220':{n:'E220 – Dióxido de azufre',d:'Puede desencadenar asma en personas sensibles.',r:'medium'},'en:e250':{n:'E250 – Nitrito de sodio',d:'Carnes procesadas. Puede generar nitrosaminas cancerígenas.',r:'high'},'en:e252':{n:'E252 – Nitrato de potasio',d:'Precursor de nitrosaminas carcinógenas.',r:'high'},'en:e270':{n:'E270 – Ácido láctico',d:'Acidulante natural de fermentación.',r:'none'},'en:e300':{n:'E300 – Vitamina C',d:'Antioxidante esencial y natural.',r:'none'},'en:e320':{n:'E320 – BHA',d:'Antioxidante sintético. Posible carcinógeno.',r:'high'},'en:e321':{n:'E321 – BHT',d:'Antioxidante sintético. Posible disruptor endocrino.',r:'high'},'en:e322':{n:'E322 – Lecitina de soja',d:'Emulsionante natural, generalmente bien tolerado.',r:'low'},'en:e330':{n:'E330 – Ácido cítrico',d:'Acidulante natural presente en cítricos.',r:'none'},'en:e407':{n:'E407 – Carragenano',d:'Espesante de algas. Puede causar inflamación intestinal.',r:'medium'},'en:e415':{n:'E415 – Goma xantana',d:'Espesante de fermentación natural.',r:'none'},'en:e450':{n:'E450 – Difosfatos',d:'Emulsionante. Puede alterar absorción de calcio.',r:'low'},'en:e471':{n:'E471 – Mono y diglicéridos',d:'Emulsionante. Puede ser de origen animal.',r:'low'},'en:e500':{n:'E500 – Carbonato sódico',d:'Regulador de acidez.',r:'none'},'en:e621':{n:'E621 – Glutamato monosódico',d:'Potenciador del sabor. Puede causar malestar en sensibles.',r:'high'},'en:e951':{n:'E951 – Aspartamo',d:'Edulcorante artificial. Controversia sobre efectos a largo plazo.',r:'high'},'en:e950':{n:'E950 – Acesulfamo K',d:'Edulcorante artificial. Puede alterar microbiota.',r:'high'},'en:e955':{n:'E955 – Sucralosa',d:'Edulcorante artificial. Altera la microbiota intestinal.',r:'medium'},'en:e960':{n:'E960 – Glucósidos de esteviol',d:'Edulcorante natural de la planta stevia.',r:'none'},'en:e171':{n:'E171 – Dióxido de titanio',d:'Colorante blanco. Posible carcinógeno oral. Prohibido en UE.',r:'high'}};
+const RISK_CFG={none:{dot:'#16C79A',bg:'#E8F9F3',lbl:'Sin riesgo',color:'#0D9E7A'},low:{dot:'#F59E0B',bg:'#FEF3C7',lbl:'Riesgo limitado',color:'#D97706'},medium:{dot:'#F97316',bg:'#FFF0E5',lbl:'Riesgo medio',color:'#EA580C'},high:{dot:'#EF4444',bg:'#FEE2E2',lbl:'De riesgo',color:'#DC2626'}};
+function buildAdditives(tags){
+  const wrap=document.createElement('div');
+  wrap.innerHTML=`<div class="sec-title" style="padding:0 2px">Aditivos</div>`;
+  const card=document.createElement('div');card.className='card';
+  if(!tags.length){card.innerHTML='<div class="add-item" style="justify-content:center;gap:8px;color:var(--g1);font-weight:600;font-size:13px;"><span>✅</span><span>Sin aditivos detectados</span></div>';}
+  else{card.innerHTML=tags.map(t=>{const info=ADD_DB[t]||{n:t.replace('en:','').toUpperCase(),d:'Aditivo alimentario',r:'low'};const r=RISK_CFG[info.r]||RISK_CFG.low;return`<div class="add-item"><div class="add-dot" style="background:${r.dot}"></div><div class="add-info"><div class="add-name">${info.n}</div><div class="add-desc">${info.d}</div></div><div class="pill" style="background:${r.bg};color:${r.color};font-size:10px">${r.lbl}</div></div>`;}).join('');}
+  wrap.appendChild(card);return wrap;
+}
+
+// ═══════════════════════════════════════════════
+//  HISTORY
+// ═══════════════════════════════════════════════
+let histFilter='all';
+function filterHistory(f,btn){histFilter=f;document.querySelectorAll('.type-tab').forEach(t=>t.classList.remove('on'));if(btn)btn.classList.add('on');renderHistory();}
+function renderHistory(){
+  const list=document.getElementById('hist-list');
+  let items=history;
+  if(histFilter==='food')items=history.filter(h=>h.type!=='cosm');
+  if(histFilter==='cosm')items=history.filter(h=>h.type==='cosm');
+  if(!items.length){
+    list.innerHTML='<div style="padding:28px 20px;text-align:center;color:var(--t3);font-size:13px;line-height:1.6;"><div style="font-size:36px;margin-bottom:10px;">📦</div>Aún no hay productos en este historial</div>';
+    return;
+  }
+  list.innerHTML=items.slice(0,10).map(h=>{
+    const sc=scoreColor(h.score);
+    return`<div class="h-item-wrap" id="wrap-${h.code}">
+      <div class="h-item" onclick="reopenProduct('${h.code}')" ontouchstart="swipeStart(event,'${h.code}')" ontouchend="swipeEnd(event,'${h.code}')">
+        <div class="h-badge" style="background:${sc.bg};color:${sc.color}">${h.score}</div>
+        <div class="h-info"><div class="h-name">${h.name}</div><div class="h-brand">${h.brand||(h.type==='cosm'?'💄':'🥗')}</div></div>
+        <div class="h-arr">›</div>
+      </div>
+      <div class="h-item-del" onclick="deleteHistItem('${h.code}')">
+        <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </div>
+    </div>`;
+  }).join('');
+  // Clear all button
+  list.innerHTML+=`<button class="hist-clear-btn" onclick="clearAllHistory()">
+    <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+    Borrar todo el historial
+  </button>`;
+  // attach mouse/click swipe for desktop
+  list.querySelectorAll('.h-item-wrap').forEach(wrap=>{
+    let startX=0;
+    wrap.addEventListener('mousedown',e=>{startX=e.clientX;});
+    wrap.addEventListener('mouseup',e=>{
+      const dx=startX-e.clientX;
+      const code=wrap.id.replace('wrap-','');
+      if(dx>50){wrap.classList.add('swiped');}
+      else if(dx<-20){wrap.classList.remove('swiped');}
+    });
+  });
+}
+let _swX=0;
+function swipeStart(e,code){_swX=e.touches[0].clientX;}
+function swipeEnd(e,code){
+  const dx=_swX-e.changedTouches[0].clientX;
+  const wrap=document.getElementById('wrap-'+code);
+  if(!wrap)return;
+  if(dx>50){wrap.classList.add('swiped');}
+  else if(dx<-20){wrap.classList.remove('swiped');}
+  else if(Math.abs(dx)<10){reopenProduct(code);}
+}
+function deleteHistItem(code){
+  history=history.filter(h=>h.code!==code);
+  LS.set(KEY_HIST,history);
+  renderHistory();
+  toast('Producto eliminado');
+}
+function clearAllHistory(){
+  if(!confirm('¿Borrar todo el historial?'))return;
+  history=[];
+  LS.set(KEY_HIST,history);
+  renderHistory();
+  toast('Historial borrado');
+}
+function reopenProduct(code){const h=history.find(x=>x.code===code);if(h&&h.product)renderResult(h.product);}
+
+// ═══════════════════════════════════════════════
+//  DIARY PRODUCT ADD
+// ═══════════════════════════════════════════════
+function addProductToDiary(){
+  if(!currentProduct){toast('Escanea un producto primero');return;}
+  document.getElementById('add-prod-info').textContent=getBestName(currentProduct);
+  document.getElementById('add-qty').value=100;
+  updateAddPreview();openModal('m-adddiary');
+}
+document.getElementById('add-qty').addEventListener('input',updateAddPreview);
+function updateAddPreview(){
+  if(!currentProduct)return;
+  const qty=parseFloat(document.getElementById('add-qty').value)||100;
+  const n=currentProduct.nutriments||{};const f=qty/100;
+  const kcal=Math.round((n['energy-kcal_100g']||n['energy_100g']*0.239||0)*f);
+  const prot=((n['proteins_100g']||0)*f).toFixed(1);
+  const carb=((n['carbohydrates_100g']||0)*f).toFixed(1);
+  const fat=((n['fat_100g']||0)*f).toFixed(1);
+  document.getElementById('add-nutri-preview').innerHTML=`<b>${kcal} kcal</b> · Prot: ${prot}g · HC: ${carb}g · Grasa: ${fat}g`;
+}
+function confirmAddDiary(){
+  if(!currentProduct)return;
+  const mealKey=document.getElementById('add-meal-sel').value;
+  const qty=parseFloat(document.getElementById('add-qty').value)||100;
+  const n=currentProduct.nutriments||{};const f=qty/100;
+  if(!diaryData[diaryCurrentDate])diaryData[diaryCurrentDate]={};
+  if(!diaryData[diaryCurrentDate][mealKey])diaryData[diaryCurrentDate][mealKey]=[];
+  diaryData[diaryCurrentDate][mealKey].push({name:getBestName(currentProduct),qty,kcal:Math.round((n['energy-kcal_100g']||n['energy_100g']*0.239||0)*f),prot:+((n['proteins_100g']||0)*f).toFixed(1),carb:+((n['carbohydrates_100g']||0)*f).toFixed(1),fat:+((n['fat_100g']||0)*f).toFixed(1),fiber:+((n['fiber_100g']||0)*f).toFixed(1)});
+  LS.set(KEY_DIARY,diaryData);closeModal('m-adddiary');toast('✅ Añadido al diario');autoSaveChecks();
+}
+
+// ═══════════════════════════════════════════════
+//  PROFILE
+// ═══════════════════════════════════════════════
+function selRadio(el,groupId){document.querySelectorAll(`#${groupId} .radio-opt`).forEach(o=>o.classList.remove('on'));el.classList.add('on');}
+function calcMacros(prof){
+  if(!prof.weight||!prof.height||!prof.age)return null;
+  const w=+prof.weight,h=+prof.height,a=+prof.age,sx=prof.sex||'m';
+  const bmr=sx==='m'?10*w+6.25*h-5*a+5:10*w+6.25*h-5*a-161;
+  const actFact=+prof.activity||1.375;const tdee=Math.round(bmr*actFact);
+  const goal=prof.goal||'maint';
+  let kcal=tdee;
+  if(goal==='cut')kcal=Math.round(tdee*0.8);else if(goal==='bulk')kcal=Math.round(tdee*1.1);else if(goal==='perf')kcal=Math.round(tdee*1.05);
+  let bfPct=+prof.bodyfat||0;
+  if(!bfPct&&prof.waist&&prof.neck&&prof.height){
+    const W=+prof.waist,N=+prof.neck,H=+prof.height;
+    if(sx==='m')bfPct=495/(1.0324-0.19077*Math.log10(W-N)+0.15456*Math.log10(H))-450;
+    else{const hip=+prof.hip||95;bfPct=495/(1.29579-0.35004*Math.log10(W+hip-N)+0.22100*Math.log10(H))-450;}
+    bfPct=Math.max(3,Math.min(50,+bfPct.toFixed(1)));
+  }
+  const lbm=bfPct?w*(1-bfPct/100):w*0.8;
+  let prot,carb,fat;
+  if(goal==='cut'){prot=Math.round(lbm*2.4);fat=Math.round(kcal*0.25/9);carb=Math.round((kcal-prot*4-fat*9)/4);}
+  else if(goal==='bulk'){prot=Math.round(lbm*2.2);fat=Math.round(kcal*0.28/9);carb=Math.round((kcal-prot*4-fat*9)/4);}
+  else if(goal==='perf'){prot=Math.round(lbm*2.0);fat=Math.round(kcal*0.25/9);carb=Math.round((kcal-prot*4-fat*9)/4);}
+  else{prot=Math.round(lbm*1.8);fat=Math.round(kcal*0.30/9);carb=Math.round((kcal-prot*4-fat*9)/4);}
+  carb=Math.max(0,carb);fat=Math.max(20,fat);
+  const micro={fiber:Math.round(kcal/1000*14),sodium:2300,vitC:sx==='m'?90:75,vitD:600,calcium:1000,iron:sx==='m'?8:18,zinc:sx==='m'?11:8,magnesium:sx==='m'?420:320,omega3:1.6,potassium:3400};
+  return{kcal,prot,carb,fat,bmr,tdee,bfPct,lbm:+lbm.toFixed(1),micro,imc:+(w/((h/100)**2)).toFixed(1)};
+}
+function renderProfile(){
+  const p=profile;
+  const fields={name:'p-name',age:'p-age',sex:'p-sex',weight:'p-weight',height:'p-height',waist:'p-waist',hip:'p-hip',neck:'p-neck',bodyfat:'p-fat'};
+  Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById(id);if(el&&p[k])el.value=p[k];});
+  if(p.activity)document.querySelectorAll('#activ-opts .radio-opt').forEach(o=>o.classList.toggle('on',o.dataset.val===String(p.activity)));
+  if(p.goal)document.querySelectorAll('#goal-opts .radio-opt').forEach(o=>o.classList.toggle('on',o.dataset.val===p.goal));
+  updateMacroHeader();renderMacroDetail();
+}
+function saveProfile(){
+  profile.name=document.getElementById('p-name').value;
+  profile.age=+document.getElementById('p-age').value||0;
+  profile.sex=document.getElementById('p-sex').value;
+  profile.weight=+document.getElementById('p-weight').value||0;
+  profile.height=+document.getElementById('p-height').value||0;
+  profile.waist=+document.getElementById('p-waist').value||0;
+  profile.hip=+document.getElementById('p-hip').value||0;
+  profile.neck=+document.getElementById('p-neck').value||0;
+  profile.bodyfat=+document.getElementById('p-fat').value||0;
+  profile.activity=+(document.querySelector('#activ-opts .radio-opt.on')?.dataset.val||1.375);
+  profile.goal=document.querySelector('#goal-opts .radio-opt.on')?.dataset.val||'maint';
+  LS.set(KEY_PROF,profile);updateMacroHeader();renderMacroDetail();toast('✅ Perfil guardado y calculado');
+}
+function updateMacroHeader(){
+  const m=calcMacros(profile);if(!m)return;
+  document.getElementById('mc-kcal').textContent=m.kcal;
+  document.getElementById('mc-prot').textContent=m.prot+'g';
+  document.getElementById('mc-carb').textContent=m.carb+'g';
+  document.getElementById('mc-fat').textContent=m.fat+'g';
+  document.getElementById('prof-name-disp').textContent=profile.name||'Mi Perfil';
+  const lbls={cut:'Pérdida de grasa',bulk:'Ganancia muscular',maint:'Mantenimiento',perf:'Rendimiento'};
+  document.getElementById('prof-sub-disp').textContent=`${lbls[profile.goal]||''} · IMC ${m.imc}`;
+}
+function renderMacroDetail(){
+  const m=calcMacros(profile);const card=document.getElementById('macro-detail-card');
+  if(!m){card.innerHTML='<div style="padding:14px 16px;text-align:center;color:var(--t3);font-size:13px;">Completa tus datos para calcular</div>';return;}
+  const rows=[{lbl:'Calorías totales',val:`${m.kcal} kcal`,sub:`TMB: ${m.bmr} kcal · TDEE: ${m.tdee} kcal`},{lbl:'Proteínas',val:`${m.prot}g`,sub:`${Math.round(m.prot*4)} kcal · ${Math.round(m.prot*4/m.kcal*100)}%`},{lbl:'Hidratos de carbono',val:`${m.carb}g`,sub:`${Math.round(m.carb*4)} kcal · ${Math.round(m.carb*4/m.kcal*100)}%`},{lbl:'Grasas',val:`${m.fat}g`,sub:`${Math.round(m.fat*9)} kcal · ${Math.round(m.fat*9/m.kcal*100)}%`},{lbl:'Fibra mínima',val:`${m.micro.fiber}g`,sub:''},{lbl:'Sodio máximo',val:`${m.micro.sodium}mg`,sub:''},{lbl:'Vitamina C',val:`${m.micro.vitC}mg`,sub:''},{lbl:'Vitamina D',val:`${m.micro.vitD}UI`,sub:''},{lbl:'Calcio',val:`${m.micro.calcium}mg`,sub:''},{lbl:'Hierro',val:`${m.micro.iron}mg`,sub:''},{lbl:'Zinc',val:`${m.micro.zinc}mg`,sub:''},{lbl:'Magnesio',val:`${m.micro.magnesium}mg`,sub:''},{lbl:'Omega-3',val:`${m.micro.omega3}g`,sub:''},{lbl:'% Grasa corporal est.',val:`${m.bfPct}%`,sub:`Masa magra: ${m.lbm}kg`}];
+  card.innerHTML=rows.map(r=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--bg);"><div><div style="font-size:13px;font-weight:600">${r.lbl}</div>${r.sub?`<div style="font-size:11px;color:var(--t3)">${r.sub}</div>`:''}</div><div style="font-size:14px;font-weight:700;color:var(--g2)">${r.val}</div></div>`).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  DIARY
+// ═══════════════════════════════════════════════
+const MEALS=[{key:'breakfast',name:'Desayuno',ico:'🌅'},{key:'morning',name:'Media mañana',ico:'🍎'},{key:'lunch',name:'Almuerzo',ico:'☀️'},{key:'snack',name:'Merienda',ico:'🍊'},{key:'dinner',name:'Cena',ico:'🌙'},{key:'preworkout',name:'Pre-entreno',ico:'⚡'},{key:'postworkout',name:'Post-entreno',ico:'💪'}];
+function changeDay(dir){
+  if(dir===0)diaryDayOffset=0;
+  else{diaryDayOffset+=dir;if(diaryDayOffset>0)diaryDayOffset=0;}
+  const d=new Date();d.setDate(d.getDate()+diaryDayOffset);
+  diaryCurrentDate=d.toISOString().slice(0,10);
+  const btn=document.getElementById('diary-date-btn');
+  if(diaryDayOffset===0)btn.textContent='Hoy';
+  else{const ns=['dom','lun','mar','mié','jue','vie','sáb'];btn.textContent=ns[d.getDay()]+' '+d.getDate();}
+  renderDiary();
+}
+function renderDiary(){
+  const m=calcMacros(profile);const dayEntry=diaryData[diaryCurrentDate]||{};
+  let tot={kcal:0,prot:0,carb:0,fat:0,fiber:0};
+  MEALS.forEach(ml=>{(dayEntry[ml.key]||[]).forEach(p=>{tot.kcal+=p.kcal||0;tot.prot+=p.prot||0;tot.carb+=p.carb||0;tot.fat+=p.fat||0;tot.fiber+=p.fiber||0;});});
+  const rings=document.getElementById('diary-rings');
+  if(m){
+    const rdata=[{lbl:'kcal',cur:tot.kcal,goal:m.kcal,color:'#6366F1'},{lbl:'Prot',cur:tot.prot,goal:m.prot,color:'#16C79A'},{lbl:'HC',cur:tot.carb,goal:m.carb,color:'#F59E0B'},{lbl:'Grasa',cur:tot.fat,goal:m.fat,color:'#F97316'},{lbl:'Fibra',cur:tot.fiber,goal:m.micro.fiber,color:'#10B981'}];
+    rings.innerHTML=rdata.map(r=>{const pct=Math.min(100,Math.round((r.cur/r.goal)*100));const circ=2*Math.PI*22,dash=circ*(pct/100);return`<div class="ring-item"><svg class="ring-svg" viewBox="0 0 50 50"><circle cx="25" cy="25" r="22" fill="none" stroke="#E8EDF2" stroke-width="5"/><circle cx="25" cy="25" r="22" fill="none" stroke="${r.color}" stroke-width="5" stroke-dasharray="${dash} ${circ}" stroke-dashoffset="${circ/4}" stroke-linecap="round" transform="rotate(-90 25 25)" style="transition:stroke-dasharray .8s ease"/><text x="25" y="28" text-anchor="middle" fill="${r.color}" font-size="10" font-weight="700" font-family="Sora">${pct}%</text></svg><div class="ring-lbl">${r.lbl}</div><div class="ring-val" style="color:${r.color}">${r.cur}/${r.goal}</div></div>`;}).join('');
+  }else{rings.innerHTML=`<div style="padding:14px;font-size:13px;color:var(--t2);">Completa tu perfil para ver objetivos</div>`;}
+  const mealsEl=document.getElementById('diary-meals');mealsEl.innerHTML='';
+  MEALS.forEach(ml=>{
+    const items=dayEntry[ml.key]||[];const mKcal=items.reduce((s,p)=>s+(p.kcal||0),0);
+    const card=document.createElement('div');card.className='meal-card';
+    card.innerHTML=`<div class="meal-hdr" onclick="toggleMeal(this)"><div class="meal-hdr-left"><span class="meal-ico">${ml.ico}</span><div><div class="meal-name">${ml.name}</div><div class="meal-cals">${mKcal} kcal · ${items.length} alimento${items.length!==1?'s':''}</div></div></div><div class="meal-arrow">›</div></div><div class="meal-body">${items.map((p,i)=>`<div class="meal-product-row"><div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0"><span style="font-size:16px;flex-shrink:0">${p.ico||'📦'}</span><div style="min-width:0"><div class="mp-name">${p.name}</div><div class="mp-qty">${p.qty}g · ${p.source==='natural'?'<span style="color:var(--g1);font-weight:600">Natural</span>':'Escaneado'}</div></div></div><div class="mp-kcal">${p.kcal} kcal</div><button class="mp-del" onclick="removeMealItem('${diaryCurrentDate}','${ml.key}',${i});event.stopPropagation()">×</button></div>`).join('')}<button class="meal-add-btn" onclick="openAddMeal('${ml.key}','${ml.name}');event.stopPropagation()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> Añadir alimento</button></div>`;
+    mealsEl.appendChild(card);
+  });
+}
+function toggleMeal(hdr){const body=hdr.nextElementSibling;const arr=hdr.querySelector('.meal-arrow');body.classList.toggle('open');arr.classList.toggle('open');}
+function removeMealItem(date,mealKey,idx){if(!diaryData[date]||!diaryData[date][mealKey])return;diaryData[date][mealKey].splice(idx,1);LS.set(KEY_DIARY,diaryData);renderDiary();}
+// ═══════════════════════════════════════════════
+//  NATURAL FOODS DATABASE — valores por 100g
+// ═══════════════════════════════════════════════
+const NATURAL_FOODS=[
+  // VERDURAS
+  {id:'espinaca',name:'Espinaca',cat:'verdura',ico:'🥬',kcal:23,prot:2.9,carb:3.6,fat:0.4,fiber:2.2,sugar:0.4,vitC:28,iron:2.7,calcium:99},
+  {id:'lechuga',name:'Lechuga romana',cat:'verdura',ico:'🥬',kcal:17,prot:1.2,carb:3.3,fat:0.3,fiber:2.1,sugar:1.2,vitC:24,iron:0.9,calcium:36},
+  {id:'acelga',name:'Acelga',cat:'verdura',ico:'🥬',kcal:19,prot:1.8,carb:3.7,fat:0.2,fiber:1.6,sugar:1.1,vitC:30,iron:1.8,calcium:51},
+  {id:'kale',name:'Kale (col rizada)',cat:'verdura',ico:'🥬',kcal:49,prot:4.3,carb:8.8,fat:0.9,fiber:3.6,sugar:2.3,vitC:120,iron:1.5,calcium:150},
+  {id:'brocoli',name:'Brócoli',cat:'verdura',ico:'🥦',kcal:34,prot:2.8,carb:6.6,fat:0.4,fiber:2.6,sugar:1.7,vitC:89,iron:0.7,calcium:47},
+  {id:'coliflor',name:'Coliflor',cat:'verdura',ico:'🥦',kcal:25,prot:1.9,carb:5.0,fat:0.3,fiber:2.0,sugar:1.9,vitC:48,iron:0.4,calcium:22},
+  {id:'col_bruselas',name:'Coles de Bruselas',cat:'verdura',ico:'🥦',kcal:43,prot:3.4,carb:8.9,fat:0.3,fiber:3.8,sugar:2.2,vitC:85,iron:1.4,calcium:42},
+  {id:'repollo',name:'Repollo',cat:'verdura',ico:'🥬',kcal:25,prot:1.3,carb:5.8,fat:0.1,fiber:2.5,sugar:3.2,vitC:36,iron:0.5,calcium:40},
+  {id:'pepino',name:'Pepino',cat:'verdura',ico:'🥒',kcal:16,prot:0.7,carb:3.6,fat:0.1,fiber:0.5,sugar:1.7,vitC:2.8,iron:0.3,calcium:16},
+  {id:'apio',name:'Apio',cat:'verdura',ico:'🌿',kcal:16,prot:0.7,carb:3.0,fat:0.2,fiber:1.6,sugar:1.3,vitC:3.1,iron:0.2,calcium:40},
+  {id:'rucula',name:'Rúcula',cat:'verdura',ico:'🥬',kcal:25,prot:2.6,carb:3.7,fat:0.7,fiber:1.6,sugar:2.1,vitC:15,iron:1.5,calcium:160},
+  // HORTALIZAS
+  {id:'tomate',name:'Tomate',cat:'hortaliza',ico:'🍅',kcal:18,prot:0.9,carb:3.9,fat:0.2,fiber:1.2,sugar:2.6,vitC:14,iron:0.3,calcium:10},
+  {id:'tomate_cherry',name:'Tomate cherry',cat:'hortaliza',ico:'🍅',kcal:18,prot:0.9,carb:3.9,fat:0.2,fiber:1.2,sugar:2.6,vitC:16,iron:0.3,calcium:10},
+  {id:'pimiento_rojo',name:'Pimiento rojo',cat:'hortaliza',ico:'🫑',kcal:31,prot:1.0,carb:6.0,fat:0.3,fiber:2.1,sugar:4.2,vitC:128,iron:0.4,calcium:7},
+  {id:'pimiento_verde',name:'Pimiento verde',cat:'hortaliza',ico:'🫑',kcal:20,prot:0.9,carb:4.6,fat:0.2,fiber:1.7,sugar:2.4,vitC:80,iron:0.4,calcium:10},
+  {id:'zanahoria',name:'Zanahoria',cat:'hortaliza',ico:'🥕',kcal:41,prot:0.9,carb:9.6,fat:0.2,fiber:2.8,sugar:4.7,vitC:6,iron:0.3,calcium:33},
+  {id:'cebolla',name:'Cebolla',cat:'hortaliza',ico:'🧅',kcal:40,prot:1.1,carb:9.3,fat:0.1,fiber:1.7,sugar:4.2,vitC:7.4,iron:0.2,calcium:23},
+  {id:'ajo',name:'Ajo',cat:'hortaliza',ico:'🧄',kcal:149,prot:6.4,carb:33,fat:0.5,fiber:2.1,sugar:1.0,vitC:31,iron:1.7,calcium:181},
+  {id:'puerro',name:'Puerro',cat:'hortaliza',ico:'🌿',kcal:61,prot:1.5,carb:14,fat:0.3,fiber:1.8,sugar:3.9,vitC:12,iron:2.1,calcium:59},
+  {id:'calabacin',name:'Calabacín',cat:'hortaliza',ico:'🥒',kcal:17,prot:1.2,carb:3.1,fat:0.3,fiber:1.0,sugar:2.5,vitC:17,iron:0.4,calcium:16},
+  {id:'berenjena',name:'Berenjena',cat:'hortaliza',ico:'🍆',kcal:25,prot:1.0,carb:5.9,fat:0.2,fiber:3.0,sugar:3.5,vitC:2.2,iron:0.2,calcium:9},
+  {id:'calabaza',name:'Calabaza',cat:'hortaliza',ico:'🎃',kcal:26,prot:1.0,carb:6.5,fat:0.1,fiber:0.5,sugar:2.8,vitC:9,iron:0.8,calcium:21},
+  {id:'esparrago',name:'Espárrago',cat:'hortaliza',ico:'🌿',kcal:20,prot:2.2,carb:3.9,fat:0.1,fiber:2.1,sugar:1.9,vitC:5.6,iron:2.1,calcium:24},
+  {id:'alcachofa',name:'Alcachofa',cat:'hortaliza',ico:'🌿',kcal:47,prot:3.3,carb:10,fat:0.2,fiber:5.4,sugar:0.9,vitC:12,iron:1.3,calcium:44},
+  {id:'remolacha',name:'Remolacha',cat:'hortaliza',ico:'🟣',kcal:43,prot:1.6,carb:9.6,fat:0.2,fiber:2.8,sugar:6.8,vitC:4.9,iron:0.8,calcium:16},
+  {id:'nabo',name:'Nabo',cat:'hortaliza',ico:'🌿',kcal:28,prot:0.9,carb:6.4,fat:0.1,fiber:1.8,sugar:3.8,vitC:21,iron:0.3,calcium:30},
+  {id:'maiz',name:'Maíz dulce',cat:'hortaliza',ico:'🌽',kcal:86,prot:3.2,carb:19,fat:1.2,fiber:2.7,sugar:3.2,vitC:7,iron:0.5,calcium:2},
+  {id:'guisante',name:'Guisante fresco',cat:'hortaliza',ico:'🟢',kcal:81,prot:5.4,carb:14,fat:0.4,fiber:5.1,sugar:5.7,vitC:40,iron:1.5,calcium:25},
+  {id:'judia_verde',name:'Judía verde',cat:'hortaliza',ico:'🟢',kcal:31,prot:1.8,carb:7.1,fat:0.1,fiber:3.4,sugar:3.3,vitC:12,iron:1.0,calcium:37},
+  // FRUTAS
+  {id:'manzana',name:'Manzana',cat:'fruta',ico:'🍎',kcal:52,prot:0.3,carb:14,fat:0.2,fiber:2.4,sugar:10,vitC:4.6,iron:0.1,calcium:6},
+  {id:'pera',name:'Pera',cat:'fruta',ico:'🍐',kcal:57,prot:0.4,carb:15,fat:0.1,fiber:3.1,sugar:9.8,vitC:4.3,iron:0.2,calcium:9},
+  {id:'platano',name:'Plátano',cat:'fruta',ico:'🍌',kcal:89,prot:1.1,carb:23,fat:0.3,fiber:2.6,sugar:12,vitC:8.7,iron:0.3,calcium:5},
+  {id:'naranja',name:'Naranja',cat:'fruta',ico:'🍊',kcal:47,prot:0.9,carb:12,fat:0.1,fiber:2.4,sugar:9.4,vitC:53,iron:0.1,calcium:40},
+  {id:'mandariana',name:'Mandarina',cat:'fruta',ico:'🍊',kcal:53,prot:0.8,carb:13,fat:0.3,fiber:1.8,sugar:10,vitC:27,iron:0.1,calcium:37},
+  {id:'limon',name:'Limón',cat:'fruta',ico:'🍋',kcal:29,prot:1.1,carb:9.3,fat:0.3,fiber:2.8,sugar:2.5,vitC:53,iron:0.6,calcium:26},
+  {id:'fresas',name:'Fresas',cat:'fruta',ico:'🍓',kcal:32,prot:0.7,carb:7.7,fat:0.3,fiber:2.0,sugar:4.9,vitC:59,iron:0.4,calcium:16},
+  {id:'arandanos',name:'Arándanos',cat:'fruta',ico:'🫐',kcal:57,prot:0.7,carb:14,fat:0.3,fiber:2.4,sugar:10,vitC:9.7,iron:0.3,calcium:6},
+  {id:'frambuesa',name:'Frambuesa',cat:'fruta',ico:'🍓',kcal:52,prot:1.2,carb:12,fat:0.7,fiber:6.5,sugar:4.4,vitC:26,iron:0.7,calcium:25},
+  {id:'moras',name:'Moras',cat:'fruta',ico:'🫐',kcal:43,prot:1.4,carb:9.6,fat:0.5,fiber:5.3,sugar:4.9,vitC:21,iron:0.6,calcium:29},
+  {id:'cereza',name:'Cerezas',cat:'fruta',ico:'🍒',kcal:63,prot:1.1,carb:16,fat:0.2,fiber:2.1,sugar:13,vitC:7,iron:0.4,calcium:13},
+  {id:'melocoton',name:'Melocotón',cat:'fruta',ico:'🍑',kcal:39,prot:0.9,carb:9.5,fat:0.3,fiber:1.5,sugar:8.4,vitC:6.6,iron:0.3,calcium:6},
+  {id:'ciruela',name:'Ciruela',cat:'fruta',ico:'🍑',kcal:46,prot:0.7,carb:11,fat:0.3,fiber:1.4,sugar:9.9,vitC:9.5,iron:0.2,calcium:6},
+  {id:'uvas',name:'Uvas',cat:'fruta',ico:'🍇',kcal:69,prot:0.7,carb:18,fat:0.2,fiber:0.9,sugar:16,vitC:3.2,iron:0.4,calcium:10},
+  {id:'kiwi',name:'Kiwi',cat:'fruta',ico:'🥝',kcal:61,prot:1.1,carb:15,fat:0.5,fiber:3.0,sugar:9.0,vitC:93,iron:0.3,calcium:34},
+  {id:'mango',name:'Mango',cat:'fruta',ico:'🥭',kcal:60,prot:0.8,carb:15,fat:0.4,fiber:1.6,sugar:14,vitC:36,iron:0.2,calcium:11},
+  {id:'pina',name:'Piña',cat:'fruta',ico:'🍍',kcal:50,prot:0.5,carb:13,fat:0.1,fiber:1.4,sugar:10,vitC:48,iron:0.3,calcium:13},
+  {id:'melon',name:'Melón',cat:'fruta',ico:'🍈',kcal:34,prot:0.8,carb:8.2,fat:0.2,fiber:0.9,sugar:7.9,vitC:18,iron:0.2,calcium:9},
+  {id:'sandia',name:'Sandía',cat:'fruta',ico:'🍉',kcal:30,prot:0.6,carb:7.6,fat:0.2,fiber:0.4,sugar:6.2,vitC:8.1,iron:0.2,calcium:7},
+  {id:'aguacate',name:'Aguacate',cat:'fruta',ico:'🥑',kcal:160,prot:2.0,carb:8.5,fat:15,fiber:6.7,sugar:0.7,vitC:10,iron:0.6,calcium:12},
+  {id:'granada',name:'Granada',cat:'fruta',ico:'🍎',kcal:83,prot:1.7,carb:19,fat:1.2,fiber:4.0,sugar:14,vitC:10,iron:0.3,calcium:10},
+  {id:'papaya',name:'Papaya',cat:'fruta',ico:'🍈',kcal:43,prot:0.5,carb:11,fat:0.3,fiber:1.7,sugar:7.8,vitC:62,iron:0.3,calcium:20},
+  {id:'higo',name:'Higo fresco',cat:'fruta',ico:'🍎',kcal:74,prot:0.8,carb:19,fat:0.3,fiber:2.9,sugar:16,vitC:2,iron:0.4,calcium:35},
+  // LEGUMBRES (cocidas)
+  {id:'lentejas',name:'Lentejas cocidas',cat:'legumbre',ico:'🫘',kcal:116,prot:9.0,carb:20,fat:0.4,fiber:7.9,sugar:1.8,vitC:1.5,iron:3.3,calcium:19},
+  {id:'garbanzos',name:'Garbanzos cocidos',cat:'legumbre',ico:'🫘',kcal:164,prot:8.9,carb:27,fat:2.6,fiber:7.6,sugar:4.8,vitC:1.3,iron:2.9,calcium:49},
+  {id:'judias_negras',name:'Judías negras cocidas',cat:'legumbre',ico:'🫘',kcal:132,prot:8.9,carb:24,fat:0.5,fiber:8.7,sugar:0.3,vitC:0,iron:2.1,calcium:27},
+  {id:'judias_blancas',name:'Judías blancas cocidas',cat:'legumbre',ico:'🫘',kcal:127,prot:8.7,carb:22,fat:0.5,fiber:7.4,sugar:0.3,vitC:0,iron:2.2,calcium:90},
+  {id:'soja',name:'Soja cocida',cat:'legumbre',ico:'🫘',kcal:173,prot:17,carb:10,fat:9.0,fiber:6.0,sugar:3.0,vitC:1.7,iron:2.5,calcium:102},
+  {id:'edamame',name:'Edamame',cat:'legumbre',ico:'🫘',kcal:121,prot:11,carb:9.9,fat:5.2,fiber:5.2,sugar:2.2,vitC:6.1,iron:2.3,calcium:60},
+  {id:'guisantes_secos',name:'Guisantes secos cocidos',cat:'legumbre',ico:'🟢',kcal:118,prot:8.3,carb:21,fat:0.4,fiber:8.3,sugar:2.9,vitC:0.4,iron:1.3,calcium:27},
+  {id:'habas',name:'Habas cocidas',cat:'legumbre',ico:'🫘',kcal:110,prot:7.6,carb:19,fat:0.4,fiber:5.4,sugar:1.8,vitC:1.4,iron:1.5,calcium:36},
+  // CEREALES / TUBÉRCULOS
+  {id:'arroz_blanco',name:'Arroz blanco cocido',cat:'cereal',ico:'🍚',kcal:130,prot:2.7,carb:28,fat:0.3,fiber:0.4,sugar:0,vitC:0,iron:0.2,calcium:10},
+  {id:'arroz_integral',name:'Arroz integral cocido',cat:'cereal',ico:'🍚',kcal:123,prot:2.7,carb:26,fat:1.0,fiber:1.8,sugar:0,vitC:0,iron:0.5,calcium:10},
+  {id:'avena',name:'Avena cruda',cat:'cereal',ico:'🌾',kcal:389,prot:17,carb:66,fat:7.0,fiber:11,sugar:1.1,vitC:0,iron:4.7,calcium:54},
+  {id:'quinoa',name:'Quinoa cocida',cat:'cereal',ico:'🌾',kcal:120,prot:4.4,carb:22,fat:1.9,fiber:2.8,sugar:0.9,vitC:0,iron:1.5,calcium:17},
+  {id:'pasta_trigo',name:'Pasta de trigo cocida',cat:'cereal',ico:'🍝',kcal:158,prot:5.8,carb:31,fat:0.9,fiber:1.8,sugar:0.6,vitC:0,iron:1.0,calcium:7},
+  {id:'pan_integral',name:'Pan integral',cat:'cereal',ico:'🍞',kcal:247,prot:13,carb:41,fat:4.2,fiber:7.0,sugar:6.0,vitC:0,iron:3.0,calcium:73},
+  {id:'pan_blanco',name:'Pan blanco',cat:'cereal',ico:'🍞',kcal:265,prot:9.0,carb:51,fat:3.2,fiber:2.7,sugar:5.0,vitC:0,iron:2.9,calcium:51},
+  {id:'patata',name:'Patata cocida',cat:'cereal',ico:'🥔',kcal:86,prot:1.9,carb:20,fat:0.1,fiber:1.8,sugar:0.9,vitC:13,iron:0.3,calcium:5},
+  {id:'boniato',name:'Boniato cocido',cat:'cereal',ico:'🍠',kcal:90,prot:2.0,carb:21,fat:0.1,fiber:3.3,sugar:4.2,vitC:13,iron:0.7,calcium:27},
+  // PROTEÍNAS ANIMALES
+  {id:'pechuga_pollo',name:'Pechuga de pollo cocida',cat:'proteina',ico:'🍗',kcal:165,prot:31,carb:0,fat:3.6,fiber:0,sugar:0,vitC:0,iron:1.0,calcium:15},
+  {id:'muslo_pollo',name:'Muslo de pollo cocido',cat:'proteina',ico:'🍗',kcal:209,prot:26,carb:0,fat:11,fiber:0,sugar:0,vitC:0,iron:1.3,calcium:12},
+  {id:'ternera_magra',name:'Ternera magra',cat:'proteina',ico:'🥩',kcal:176,prot:26,carb:0,fat:7.4,fiber:0,sugar:0,vitC:0,iron:2.5,calcium:18},
+  {id:'lomo_cerdo',name:'Lomo de cerdo',cat:'proteina',ico:'🥩',kcal:242,prot:27,carb:0,fat:14,fiber:0,sugar:0,vitC:0,iron:0.9,calcium:19},
+  {id:'salmon',name:'Salmón',cat:'proteina',ico:'🐟',kcal:208,prot:20,carb:0,fat:13,fiber:0,sugar:0,vitC:0,iron:0.3,calcium:9},
+  {id:'atun_fresco',name:'Atún fresco',cat:'proteina',ico:'🐟',kcal:144,prot:23,carb:0,fat:5.1,fiber:0,sugar:0,vitC:0,iron:1.0,calcium:8},
+  {id:'merluza',name:'Merluza',cat:'proteina',ico:'🐟',kcal:82,prot:17,carb:0,fat:1.0,fiber:0,sugar:0,vitC:0,iron:0.5,calcium:27},
+  {id:'bacalao',name:'Bacalao',cat:'proteina',ico:'🐟',kcal:82,prot:18,carb:0,fat:0.7,fiber:0,sugar:0,vitC:0,iron:0.5,calcium:16},
+  {id:'sardina',name:'Sardina fresca',cat:'proteina',ico:'🐟',kcal:208,prot:25,carb:0,fat:11,fiber:0,sugar:0,vitC:0,iron:2.9,calcium:382},
+  {id:'huevo_entero',name:'Huevo entero',cat:'proteina',ico:'🥚',kcal:143,prot:13,carb:0.7,fat:10,fiber:0,sugar:0.4,vitC:0,iron:1.8,calcium:56},
+  {id:'clara_huevo',name:'Clara de huevo',cat:'proteina',ico:'🥚',kcal:52,prot:11,carb:0.7,fat:0.2,fiber:0,sugar:0.5,vitC:0,iron:0.1,calcium:7},
+  {id:'pavo_pechuga',name:'Pechuga de pavo',cat:'proteina',ico:'🍗',kcal:135,prot:30,carb:0,fat:1.0,fiber:0,sugar:0,vitC:0,iron:1.0,calcium:15},
+  // LÁCTEOS
+  {id:'leche_entera',name:'Leche entera',cat:'lacteo',ico:'🥛',kcal:61,prot:3.2,carb:4.8,fat:3.3,fiber:0,sugar:4.8,vitC:0,iron:0.1,calcium:113},
+  {id:'leche_desnatada',name:'Leche desnatada',cat:'lacteo',ico:'🥛',kcal:35,prot:3.5,carb:5.0,fat:0.2,fiber:0,sugar:5.0,vitC:0,iron:0.1,calcium:125},
+  {id:'yogur_natural',name:'Yogur natural',cat:'lacteo',ico:'🫙',kcal:61,prot:3.5,carb:4.7,fat:3.3,fiber:0,sugar:4.7,vitC:0,iron:0.1,calcium:121},
+  {id:'yogur_griego',name:'Yogur griego natural',cat:'lacteo',ico:'🫙',kcal:97,prot:9.0,carb:3.6,fat:5.0,fiber:0,sugar:3.2,vitC:0,iron:0.1,calcium:110},
+  {id:'queso_fresco',name:'Queso fresco (Burgos)',cat:'lacteo',ico:'🧀',kcal:97,prot:11,carb:2.5,fat:4.8,fiber:0,sugar:2.5,vitC:0,iron:0.2,calcium:120},
+  {id:'queso_cottage',name:'Queso cottage',cat:'lacteo',ico:'🧀',kcal:98,prot:11,carb:3.4,fat:4.3,fiber:0,sugar:2.7,vitC:0,iron:0.1,calcium:83},
+  {id:'requesón',name:'Requesón (Ricotta)',cat:'lacteo',ico:'🧀',kcal:174,prot:11,carb:3.0,fat:13,fiber:0,sugar:0.3,vitC:0,iron:0.4,calcium:207},
+  // GRASAS SALUDABLES
+  {id:'aceite_oliva',name:'Aceite de oliva virgen extra',cat:'grasa',ico:'🫒',kcal:884,prot:0,carb:0,fat:100,fiber:0,sugar:0,vitC:0,iron:0.1,calcium:1},
+  {id:'aguacate_g',name:'Aguacate (grasa)',cat:'grasa',ico:'🥑',kcal:160,prot:2.0,carb:8.5,fat:15,fiber:6.7,sugar:0.7,vitC:10,iron:0.6,calcium:12},
+  {id:'aceite_coco',name:'Aceite de coco',cat:'grasa',ico:'🥥',kcal:892,prot:0,carb:0,fat:99,fiber:0,sugar:0,vitC:0,iron:0.1,calcium:1},
+  {id:'mantequilla',name:'Mantequilla',cat:'grasa',ico:'🧈',kcal:717,prot:0.9,carb:0.1,fat:81,fiber:0,sugar:0.1,vitC:0,iron:0.02,calcium:24},
+  // FRUTOS SECOS Y SEMILLAS
+  {id:'almendras',name:'Almendras',cat:'fruto_seco',ico:'🥜',kcal:579,prot:21,carb:22,fat:50,fiber:12,sugar:4.4,vitC:0,iron:3.7,calcium:264},
+  {id:'nueces',name:'Nueces',cat:'fruto_seco',ico:'🥜',kcal:654,prot:15,carb:14,fat:65,fiber:6.7,sugar:2.6,vitC:1.3,iron:2.9,calcium:98},
+  {id:'avellanas',name:'Avellanas',cat:'fruto_seco',ico:'🥜',kcal:628,prot:15,carb:17,fat:61,fiber:9.7,sugar:4.3,vitC:6.3,iron:4.7,calcium:114},
+  {id:'anacardos',name:'Anacardos',cat:'fruto_seco',ico:'🥜',kcal:553,prot:18,carb:30,fat:44,fiber:3.3,sugar:5.9,vitC:0.5,iron:6.7,calcium:37},
+  {id:'pistachos',name:'Pistachos',cat:'fruto_seco',ico:'🥜',kcal:560,prot:20,carb:28,fat:45,fiber:10,sugar:7.7,vitC:5.6,iron:4.0,calcium:105},
+  {id:'semillas_chia',name:'Semillas de chía',cat:'fruto_seco',ico:'🌱',kcal:486,prot:17,carb:42,fat:31,fiber:34,sugar:0,vitC:1.6,iron:7.7,calcium:631},
+  {id:'semillas_lino',name:'Semillas de lino',cat:'fruto_seco',ico:'🌱',kcal:534,prot:18,carb:29,fat:42,fiber:27,sugar:1.6,vitC:0.6,iron:5.7,calcium:255},
+  {id:'semillas_calabaza',name:'Semillas de calabaza',cat:'fruto_seco',ico:'🌱',kcal:559,prot:30,carb:11,fat:49,fiber:6.0,sugar:1.4,vitC:1.9,iron:8.8,calcium:46},
+  {id:'cacahuetes',name:'Cacahuetes',cat:'fruto_seco',ico:'🥜',kcal:567,prot:26,carb:16,fat:49,fiber:8.5,sugar:4.7,vitC:0,iron:4.6,calcium:92},
+  {id:'pipas_girasol',name:'Pipas de girasol',cat:'fruto_seco',ico:'🌱',kcal:584,prot:21,carb:20,fat:51,fiber:8.6,sugar:2.6,vitC:1.4,iron:5.3,calcium:78},
+  // HONGOS / SETAS
+  {id:'champiñon',name:'Champiñón',cat:'verdura',ico:'🍄',kcal:22,prot:3.1,carb:3.3,fat:0.3,fiber:1.0,sugar:2.0,vitC:2.1,iron:0.5,calcium:3},
+  {id:'seta_portobello',name:'Seta Portobello',cat:'verdura',ico:'🍄',kcal:22,prot:2.1,carb:3.9,fat:0.4,fiber:1.3,sugar:2.1,vitC:0,iron:0.3,calcium:3},
+];
+
+// ═══════════════════════════════════════════════
+//  MEAL ADD LOGIC — scanned + natural
+// ═══════════════════════════════════════════════
+let addMealTarget=null,addMealSelected=null,addMealTab='scanned',natCatFilter='';
+
+function openAddMeal(mealKey,mealName){
+  addMealTarget=mealKey;addMealSelected=null;
+  document.getElementById('addmeal-title').textContent='Añadir a '+mealName;
+  document.getElementById('addmeal-search').value='';
+  document.getElementById('addmeal-qty-wrap').style.display='none';
+  document.getElementById('addmeal-nutri-preview').textContent='';
+  switchAddTab(addMealTab);
+  openModal('m-addmeal');
+}
+
+function switchAddTab(tab){
+  addMealTab=tab;addMealSelected=null;
+  document.getElementById('addmeal-qty-wrap').style.display='none';
+  document.getElementById('addmeal-search').value='';
+  document.getElementById('tab-scanned').classList.toggle('on',tab==='scanned');
+  document.getElementById('tab-natural').classList.toggle('on',tab==='natural');
+  document.getElementById('natural-cats').style.display=tab==='natural'?'block':'none';
+  filterAddMealList();
+}
+
+function selectNatCat(cat,btn){
+  natCatFilter=cat;
+  document.querySelectorAll('#natural-cats .mtab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  filterAddMealList();
+}
+
+function filterAddMealList(){
+  const q=document.getElementById('addmeal-search').value.toLowerCase().trim();
+  const list=document.getElementById('addmeal-list');
+
+  if(addMealTab==='scanned'){
+    const items=history.filter(h=>h.type!=='cosm'&&(!q||h.name.toLowerCase().includes(q)));
+    if(!items.length){
+      list.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--t3);">No hay productos escaneados.<br>Escanea primero un producto.</div>';
+      return;
+    }
+    list.innerHTML=items.map(h=>{
+      const sc=scoreColor(h.score);
+      return`<div onclick="selectScannedProd(${JSON.stringify(h).replace(/"/g,'&quot;')})"
+        style="padding:11px 14px;border-bottom:1px solid var(--card);cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .1s;"
+        onmouseenter="this.style.background='var(--bg)'" onmouseleave="this.style.background=''">
+        <div style="width:32px;height:32px;border-radius:8px;background:${sc.bg};color:${sc.color};font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${h.score}</div>
+        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${h.name}</div><div style="font-size:11px;color:var(--t2)">${h.brand||'Sin marca'}</div></div>
+      </div>`;
+    }).join('');
+
+  } else {
+    let items=NATURAL_FOODS;
+    if(natCatFilter) items=items.filter(f=>f.cat===natCatFilter);
+    if(q) items=items.filter(f=>f.name.toLowerCase().includes(q)||f.cat.includes(q));
+    if(!items.length){
+      list.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--t3);">Sin resultados para esa búsqueda</div>';
+      return;
+    }
+    // Group by category when no search query and no specific cat filter
+    const grouped=!q&&!natCatFilter;
+    const catNames={verdura:'🥬 Verduras y setas',hortaliza:'🥕 Hortalizas',fruta:'🍎 Frutas',legumbre:'🫘 Legumbres',cereal:'🌾 Cereales y tubérculos',proteina:'🥩 Proteínas animales',lacteo:'🥛 Lácteos',grasa:'🫒 Grasas saludables',fruto_seco:'🥜 Frutos secos y semillas'};
+    if(grouped){
+      const cats=[...new Set(NATURAL_FOODS.map(f=>f.cat))];
+      list.innerHTML=cats.map(cat=>{
+        const catItems=items.filter(f=>f.cat===cat);
+        if(!catItems.length)return'';
+        return`<div style="padding:8px 14px 4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--t3);background:var(--card);">${catNames[cat]||cat}</div>`
+          +catItems.map(f=>naturalFoodRow(f)).join('');
+      }).join('');
+    }else{
+      list.innerHTML=items.map(f=>naturalFoodRow(f)).join('');
+    }
+  }
+}
+
+function naturalFoodRow(f){
+  return`<div onclick="selectNaturalFood('${f.id}')"
+    style="padding:11px 14px;border-bottom:1px solid var(--card);cursor:pointer;display:flex;align-items:center;gap:10px;"
+    onmouseenter="this.style.background='var(--g3)'" onmouseleave="this.style.background=''">
+    <span style="font-size:22px;flex-shrink:0">${f.ico}</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:600">${f.name}</div>
+      <div style="font-size:11px;color:var(--t2);margin-top:1px">${f.kcal} kcal · P:${f.prot}g · HC:${f.carb}g · G:${f.fat}g · F:${f.fiber}g <span style="color:var(--t3)">/ 100g</span></div>
+    </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`;
+}
+
+function selectScannedProd(h){
+  addMealSelected={type:'scanned',data:h};
+  const n=h.product?.nutriments||{};
+  document.getElementById('addmeal-qty').value=100;
+  updateAddMealPreview();
+  document.getElementById('addmeal-qty-wrap').style.display='block';
+  document.getElementById('addmeal-list').scrollTop=0;
+}
+
+function selectNaturalFood(id){
+  const f=NATURAL_FOODS.find(x=>x.id===id);
+  if(!f)return;
+  addMealSelected={type:'natural',data:f};
+  document.getElementById('addmeal-qty').value=100;
+  updateAddMealPreview();
+  document.getElementById('addmeal-qty-wrap').style.display='block';
+  document.getElementById('addmeal-list').scrollTop=0;
+}
+
+function updateAddMealPreview(){
+  if(!addMealSelected)return;
+  const qty=parseFloat(document.getElementById('addmeal-qty').value)||100;
+  const f=qty/100;
+  let kcal,prot,carb,fat,fiber;
+  if(addMealSelected.type==='natural'){
+    const d=addMealSelected.data;
+    kcal=Math.round(d.kcal*f);prot=+(d.prot*f).toFixed(1);carb=+(d.carb*f).toFixed(1);fat=+(d.fat*f).toFixed(1);fiber=+(d.fiber*f).toFixed(1);
+  }else{
+    const n=addMealSelected.data.product?.nutriments||{};
+    kcal=Math.round((n['energy-kcal_100g']||n['energy_100g']*0.239||0)*f);
+    prot=+((n['proteins_100g']||0)*f).toFixed(1);
+    carb=+((n['carbohydrates_100g']||0)*f).toFixed(1);
+    fat=+((n['fat_100g']||0)*f).toFixed(1);
+    fiber=+((n['fiber_100g']||0)*f).toFixed(1);
+  }
+  document.getElementById('addmeal-nutri-preview').innerHTML=
+    `<b style="color:var(--t1)">${qty}g → ${kcal} kcal</b><span style="color:var(--t3)"> · </span>Prot: <b>${prot}g</b> · HC: <b>${carb}g</b> · Grasa: <b>${fat}g</b> · Fibra: <b>${fiber}g</b>`;
+}
+
+function confirmMealAdd(){
+  if(!addMealSelected||!addMealTarget)return;
+  const qty=+document.getElementById('addmeal-qty').value||100;
+  const f=qty/100;
+  let entry;
+  if(addMealSelected.type==='natural'){
+    const d=addMealSelected.data;
+    entry={name:d.name,qty,source:'natural',ico:d.ico,
+      kcal:Math.round(d.kcal*f),prot:+(d.prot*f).toFixed(1),
+      carb:+(d.carb*f).toFixed(1),fat:+(d.fat*f).toFixed(1),fiber:+(d.fiber*f).toFixed(1)};
+  }else{
+    const h=addMealSelected.data;
+    const n=h.product?.nutriments||{};
+    if(!h.product){toast('Datos no disponibles');closeModal('m-addmeal');return;}
+    entry={name:h.name,qty,source:'scanned',
+      kcal:Math.round((n['energy-kcal_100g']||n['energy_100g']*0.239||0)*f),
+      prot:+((n['proteins_100g']||0)*f).toFixed(1),
+      carb:+((n['carbohydrates_100g']||0)*f).toFixed(1),
+      fat:+((n['fat_100g']||0)*f).toFixed(1),
+      fiber:+((n['fiber_100g']||0)*f).toFixed(1)};
+  }
+  if(!diaryData[diaryCurrentDate])diaryData[diaryCurrentDate]={};
+  if(!diaryData[diaryCurrentDate][addMealTarget])diaryData[diaryCurrentDate][addMealTarget]=[];
+  diaryData[diaryCurrentDate][addMealTarget].push(entry);
+  LS.set(KEY_DIARY,diaryData);
+  closeModal('m-addmeal');
+  toast(`✅ ${entry.name} añadido`);
+  renderDiary();autoSaveChecks();
+}
+function autoSaveChecks(){
+  const m=calcMacros(profile);if(!m)return;
+  const dayEntry=diaryData[diaryCurrentDate]||{};
+  let tot={kcal:0,prot:0,carb:0,fat:0};
+  MEALS.forEach(ml=>{(dayEntry[ml.key]||[]).forEach(p=>{tot.kcal+=p.kcal||0;tot.prot+=p.prot||0;tot.carb+=p.carb||0;tot.fat+=p.fat||0;});});
+  if(!checksLog[diaryCurrentDate])checksLog[diaryCurrentDate]={};
+  checksLog[diaryCurrentDate].kcal=tot.kcal>=m.kcal*0.85&&tot.kcal<=m.kcal*1.1;
+  checksLog[diaryCurrentDate].prot=tot.prot>=m.prot*0.9;
+  checksLog[diaryCurrentDate].carb=tot.carb>=m.carb*0.85;
+  checksLog[diaryCurrentDate].fat=tot.fat>=m.fat*0.85;
+  LS.set(KEY_CHECKS,checksLog);
+}
+// ═══════════════════════════════════════════════
+//  MEASURES MODAL
+// ═══════════════════════════════════════════════
+function openMeasureModal(){
+  document.getElementById('measure-date-label').textContent='📅 Registrando para: '+trackDate;
+  const existing=measLog.find(m=>m.date===trackDate);
+  const fields={weight:'m-weight',bodyfat:'m-bodyfat',muscle:'m-muscle',waist:'m-waist',hip:'m-hip',hr:'m-hr',steps:'m-steps',sleep:'m-sleep',sleep_q:'m-sleep-q',energy:'m-energy',stress:'m-stress',notes:'m-notes'};
+  Object.entries(fields).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=existing&&existing[k]?existing[k]:'';});
+  openModal('m-addmeasure');
+}
+function saveMeasures(){
+  const weight=parseFloat(document.getElementById('m-weight').value);
+  const entry={date:trackDate};
+  const fields={weight:'m-weight',bodyfat:'m-bodyfat',muscle:'m-muscle',waist:'m-waist',hip:'m-hip',hr:'m-hr',steps:'m-steps',sleep:'m-sleep',sleep_q:'m-sleep-q',energy:'m-energy',stress:'m-stress'};
+  Object.entries(fields).forEach(([k,id])=>{const v=parseFloat(document.getElementById(id)?.value);if(!isNaN(v)&&v>0)entry[k]=v;});
+  entry.notes=document.getElementById('m-notes').value;
+  measLog=measLog.filter(m=>m.date!==trackDate);
+  measLog.push(entry);
+  measLog.sort((a,b)=>a.date.localeCompare(b.date));
+  LS.set(KEY_MEAS,measLog);
+  if(weight){profile.weight=weight;LS.set(KEY_PROF,profile);}
+  closeModal('m-addmeasure');toast('✅ Medidas guardadas');renderTracking();
+}
+
+// ═══════════════════════════════════════════════
+//  TRACKING — full dashboard
+// ═══════════════════════════════════════════════
+let trackMetric='weight'; // active chart metric
+function renderTracking(){
+  // Date strip
+  const strip=document.getElementById('track-strip');
+  const days=[];for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push({str:d.toISOString().slice(0,10),d});}
+  strip.innerHTML=days.map(({str,d})=>{const ns=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];const ch=checksLog[str]||{};const hasMeas=measLog.some(m=>m.date===str);const isOn=str===trackDate;return`<div class="tday${isOn?' on':''}" onclick="selectTrackDay('${str}',this)"><span class="tday-n">${ns[d.getDay()]}</span><span class="tday-d">${d.getDate()}</span>${(hasMeas||Object.keys(ch).length>0)?`<div class="tday-dot"></div>`:''}</div>`;}).join('');
+  renderTrackContent();
+}
+function selectTrackDay(date,el){trackDate=date;document.querySelectorAll('.tday').forEach(t=>t.classList.remove('on'));el.classList.add('on');renderTrackContent();}
+
+function renderTrackContent(){
+  const content=document.getElementById('track-content');
+  const m=calcMacros(profile);
+  const dayEntry=diaryData[trackDate]||{};
+  let tot={kcal:0,prot:0,carb:0,fat:0};
+  MEALS.forEach(ml=>{(dayEntry[ml.key]||[]).forEach(p=>{tot.kcal+=p.kcal||0;tot.prot+=p.prot||0;tot.carb+=p.carb||0;tot.fat+=p.fat||0;});});
+  const wEntry=measLog.find(w=>w.date===trackDate);
+  const prevW=measLog.filter(w=>w.date<trackDate).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const wDiff=wEntry&&prevW&&wEntry.weight&&prevW.weight?+(wEntry.weight-prevW.weight).toFixed(1):null;
+  let html='';
+
+  // ── Quick stats grid ──
+  html+=`<div class="sec-title">Resumen del día</div><div class="stat-grid">`;
+  html+=`<div class="stat-box"><div class="stat-box-ico">⚡</div><div class="stat-box-val">${tot.kcal}</div><div class="stat-box-lbl">kcal consumidas${m?' / '+m.kcal:''}</div><div class="stat-box-trend ${m&&tot.kcal>=m.kcal*0.85?'trend-dn':'trend-up'}">${m?Math.round(tot.kcal/m.kcal*100)+'% objetivo':''}</div></div>`;
+  html+=`<div class="stat-box"><div class="stat-box-ico">💪</div><div class="stat-box-val">${tot.prot}g</div><div class="stat-box-lbl">proteínas${m?' / '+m.prot+'g':''}</div><div class="stat-box-trend ${m&&tot.prot>=m.prot*0.9?'trend-dn':'trend-up'}">${m?Math.round(tot.prot/m.prot*100)+'%':''}</div></div>`;
+  html+=`<div class="stat-box"><div class="stat-box-ico">⚖️</div><div class="stat-box-val">${wEntry&&wEntry.weight?wEntry.weight+'kg':'—'}</div><div class="stat-box-lbl">peso registrado</div><div class="stat-box-trend ${wDiff!==null&&wDiff<=0?'trend-dn':'trend-up'}">${wDiff!==null?(wDiff>0?'↑':'↓')+Math.abs(wDiff)+'kg':''}</div></div>`;
+  html+=`<div class="stat-box"><div class="stat-box-ico">🔥</div>`;
+  let streak=0;for(let i=0;i<30;i++){const d=new Date();d.setDate(d.getDate()-i);const ds=d.toISOString().slice(0,10);const ch=checksLog[ds]||{};if(Object.values(ch).some(Boolean))streak++;else break;}
+  html+=`<div class="stat-box-val" style="color:var(--o1)">${streak}</div><div class="stat-box-lbl">días de racha</div><div class="stat-box-trend trend-dn">${streak>0?'¡Sigue así!':''}</div></div>`;
+  html+=`</div>`;
+
+  // ── Body composition card ──
+  if(wEntry){
+    html+=`<div class="sec-title">Composición corporal hoy</div><div class="card"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;">`;
+    const bcomp=[{l:'Peso',v:wEntry.weight?wEntry.weight+'kg':null},{l:'Grasa',v:wEntry.bodyfat?wEntry.bodyfat+'%':null},{l:'Músculo',v:wEntry.muscle?wEntry.muscle+'%':null},{l:'IMC',v:wEntry.weight&&profile.height?+(wEntry.weight/((profile.height/100)**2)).toFixed(1):null},{l:'Masa magra',v:wEntry.weight&&wEntry.bodyfat?+(wEntry.weight*(1-wEntry.bodyfat/100)).toFixed(1)+'kg':null}];
+    html+=bcomp.filter(b=>b.v).map(b=>`<div style="padding:12px;border-bottom:1px solid var(--bg);"><div style="font-size:16px;font-weight:800;color:var(--t1)">${b.v}</div><div style="font-size:10px;color:var(--t2);margin-top:2px">${b.l}</div></div>`).join('');
+    html+=`</div></div>`;
+  }
+
+  // ── Anthropometric measures card ──
+  if(wEntry){
+    const anth=[{l:'Cintura',v:wEntry.waist,u:'cm'},{l:'Cadera',v:wEntry.hip,u:'cm'}].filter(a=>a.v);
+    if(anth.length){
+      html+=`<div class="sec-title">Medidas antropométricas</div><div class="card"><div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">`;
+      html+=anth.map(a=>`<div style="padding:11px 14px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:var(--t2)">${a.l}</span><span style="font-size:14px;font-weight:700">${a.v}${a.u}</span></div>`).join('');
+      html+=`</div></div>`;
+    }
+  }
+
+  // ── Wellness card ──
+  if(wEntry){
+    const well=[{l:'FC reposo',v:wEntry.hr,u:'bpm',ico:'❤️'},{l:'Pasos',v:wEntry.steps,u:'',ico:'🚶'},{l:'Sueño',v:wEntry.sleep,u:'h',ico:'😴'},{l:'Cal. sueño',v:wEntry.sleep_q,u:'/10',ico:'⭐'},{l:'Energía',v:wEntry.energy,u:'/10',ico:'⚡'},{l:'Estrés',v:wEntry.stress,u:'/10',ico:'🧘'}].filter(a=>a.v);
+    if(well.length){
+      html+=`<div class="sec-title">Bienestar y rendimiento</div><div class="card">`;
+      html+=well.map(w=>`<div class="check-row"><span style="font-size:18px">${w.ico}</span><div class="check-lbl">${w.l}</div><div style="font-size:14px;font-weight:700;color:var(--b1)">${w.v}${w.u}</div></div>`).join('');
+      if(wEntry.notes)html+=`<div style="padding:12px 16px;font-size:13px;color:var(--t2);font-style:italic;border-top:1px solid var(--bg);">"${wEntry.notes}"</div>`;
+      html+=`</div>`;
+    }
+  }
+
+  // ── Metric chart selector ──
+  const chartMetrics=[{k:'weight',l:'Peso (kg)'},{k:'bodyfat',l:'% Grasa'},{k:'muscle',l:'% Músculo'},{k:'waist',l:'Cintura'},{k:'hip',l:'Cadera'},{k:'steps',l:'Pasos'},{k:'sleep',l:'Sueño (h)'},{k:'energy',l:'Energía'},{k:'hr',l:'FC reposo'},{k:'stress',l:'Estrés'}];
+  const validMetrics=chartMetrics.filter(cm=>measLog.some(m=>m[cm.k]));
+  if(validMetrics.length>=2){
+    html+=`<div class="sec-title">Evolución</div>`;
+    html+=`<div class="mtabs" id="metric-tabs">${validMetrics.map(cm=>`<div class="mtab${trackMetric===cm.k?' on':''}" onclick="setTrackMetric('${cm.k}')">${cm.l}</div>`).join('')}</div>`;
+    // Line/bar chart using SVG
+    html+=buildMetricChart(trackMetric,validMetrics.find(m=>m.k===trackMetric)?.l||'');
+  } else if(measLog.length===1){
+    html+=`<div class="sec-title">Evolución</div><div class="card card-pad" style="text-align:center;font-size:13px;color:var(--t2);">Registra medidas en más días para ver la evolución</div>`;
+  }
+
+  // ── Nutritional goal checks ──
+  html+=`<div class="sec-title">Objetivos nutricionales</div><div class="card">`;
+  if(m){
+    const chs=checksLog[trackDate]||{};
+    const checks=[{key:'kcal',lbl:`Calorías (${m.kcal} kcal)`,sub:`Consumidas: ${tot.kcal} kcal`},{key:'prot',lbl:`Proteínas (${m.prot}g)`,sub:`Consumidas: ${tot.prot}g`},{key:'carb',lbl:`Hidratos (${m.carb}g)`,sub:`Consumidos: ${tot.carb}g`},{key:'fat',lbl:`Grasas (${m.fat}g)`,sub:`Consumidas: ${tot.fat}g`}];
+    html+=checks.map(c=>`<div class="check-row"><div class="check-circle ${chs[c.key]?'done':''}" onclick="toggleCheck('${c.key}')">${chs[c.key]?'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>':''}</div><div><div class="check-lbl">${c.lbl}</div><div class="check-sub">${c.sub}</div></div></div>`).join('');
+  }else{html+=`<div style="padding:14px 16px;font-size:13px;color:var(--t2);">Completa tu perfil para ver objetivos</div>`;}
+  html+=`</div>`;
+
+  // ── 30-day compliance ──
+  const last30=[];for(let i=29;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);last30.push(d.toISOString().slice(0,10));}
+  const daysWithGoal=last30.filter(d=>{const ch=checksLog[d]||{};return Object.values(ch).some(Boolean);}).length;
+  const daysWithMeas=last30.filter(d=>measLog.some(m=>m.date===d)).length;
+  html+=`<div class="sec-title">Resumen 30 días</div><div class="stat-grid">`;
+  html+=`<div class="stat-box"><div class="stat-box-ico">📅</div><div class="stat-box-val">${daysWithGoal}</div><div class="stat-box-lbl">días con objetivos cumplidos</div></div>`;
+  html+=`<div class="stat-box"><div class="stat-box-ico">📏</div><div class="stat-box-val">${daysWithMeas}</div><div class="stat-box-lbl">días con medidas registradas</div></div>`;
+  // weight delta 30d
+  const firstW=last30.map(d=>measLog.find(m=>m.date===d&&m.weight)).find(Boolean);
+  const lastW=[...last30].reverse().map(d=>measLog.find(m=>m.date===d&&m.weight)).find(Boolean);
+  if(firstW&&lastW&&firstW!==lastW){
+    const delta=+(lastW.weight-firstW.weight).toFixed(1);
+    html+=`<div class="stat-box"><div class="stat-box-ico">⚖️</div><div class="stat-box-val" style="color:${delta<=0?'var(--g1)':'var(--r1)'}">${delta>0?'+':''}${delta}kg</div><div class="stat-box-lbl">variación de peso (30 días)</div></div>`;
+  }
+  html+=`</div>`;
+
+  // ── Meals ──
+  html+=`<div class="sec-title">Comidas del día</div><div class="card">`;
+  const mealsDone=MEALS.filter(ml=>(dayEntry[ml.key]||[]).length>0);
+  if(!mealsDone.length)html+=`<div style="padding:14px 16px;font-size:13px;color:var(--t2);">Sin comidas registradas este día</div>`;
+  else html+=mealsDone.map(ml=>{const items=dayEntry[ml.key];const mKcal=items.reduce((s,p)=>s+(p.kcal||0),0);return`<div class="check-row"><span style="font-size:20px">${ml.ico}</span><div><div class="check-lbl">${ml.name}</div><div class="check-sub">${items.length} alimentos · ${mKcal} kcal</div></div></div>`;}).join('');
+  html+=`</div>`;
+
+  // ── Action buttons ──
+  const hasDayMeas=measLog.some(m=>m.date===trackDate);
+  const hasDayChecks=Object.keys(checksLog[trackDate]||{}).length>0;
+  const hasDayDiary=MEALS.some(ml=>(diaryData[trackDate]?.[ml.key]||[]).length>0);
+  const hasDayData=hasDayMeas||hasDayChecks||hasDayDiary;
+
+  html+=`<div style="padding:0 0 6px;">
+    <button class="btn btn-secondary" onclick="openMeasureModal()" style="margin-bottom:10px;">
+      📏 ${hasDayMeas?'Editar medidas de este día':'Añadir medidas de este día'}
+    </button>`;
+
+  if(hasDayData){
+    html+=`<button class="btn" onclick="deleteDayData('${trackDate}')"
+      style="background:var(--r3);color:var(--r1);border:1.5px solid #FCA5A5;font-size:14px;">
+      <span style="display:flex;align-items:center;justify-content:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Eliminar todos los datos de este día
+      </span>
+    </button>`;
+  }
+
+  html+=`</div>`;
+
+  content.innerHTML=html;
+}
+
+function deleteDayData(date){
+  // Show a confirm-style inline state: first click arms, second fires
+  const btn=document.querySelector(`[onclick="deleteDayData('${date}')"]`);
+  if(btn&&!btn.dataset.armed){
+    btn.dataset.armed='1';
+    btn.style.background='var(--r1)';
+    btn.style.color='white';
+    btn.style.borderColor='var(--r2)';
+    btn.querySelector('span').innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> ¿Confirmar? Toca de nuevo`;
+    // Auto-disarm after 4 s if not confirmed
+    setTimeout(()=>{
+      if(btn&&btn.dataset.armed){
+        btn.dataset.armed='';
+        btn.style.background='var(--r3)';
+        btn.style.color='var(--r1)';
+        btn.style.borderColor='#FCA5A5';
+        btn.querySelector('span').innerHTML=`<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg> Eliminar todos los datos de este día`;
+      }
+    },4000);
+    return;
+  }
+  // Confirmed — wipe all data for this date
+  measLog=measLog.filter(m=>m.date!==date);
+  delete checksLog[date];
+  delete diaryData[date];
+  LS.set(KEY_MEAS,measLog);
+  LS.set(KEY_CHECKS,checksLog);
+  LS.set(KEY_DIARY,diaryData);
+  toast('🗑️ Datos del día eliminados');
+  renderTracking();
+}
+
+// Semantic color map: for each metric, is an INCREASE good (green) or bad (red)?
+const METRIC_DIRECTION={
+  // ↑ good (more is better)
+  weight: null,       // neutral — depends on goal, use goal-aware logic below
+  muscle: 'up',       // more muscle → green
+  water: 'up',        // more hydration → green
+  energy: 'up',       // more energy → green
+  sleep: 'up',        // more sleep → green
+  sleep_q: 'up',      // better sleep quality → green
+  steps: 'up',        // more steps → green
+  // ↓ good (less is better)
+  bodyfat: 'down',    // less fat → green
+  waist: 'down',      // smaller waist → green
+  hip: 'down',        // context-dependent but generally down for fat loss
+  stress: 'down',     // less stress → green
+  hr: 'down',         // lower resting HR → green (fitness)
+  bp_sys: 'down',     // lower blood pressure → green
+  bp_dia: 'down',
+  // circumferences — down for fat loss goal, up for muscle gain
+  chest: null,
+  neck: null,
+  arm_l: 'up',        // bigger arms → green (muscle)
+  arm_r: 'up',
+  thigh_l: null,
+  thigh_r: null,
+  calf_l: 'up',
+  calf_r: 'up',
+};
+
+function getDeltaColor(metric, delta){
+  if(delta===0) return 'var(--t2)';
+  // weight: depends on profile goal
+  if(metric==='weight'){
+    const goal=profile.goal||'maint';
+    if(goal==='cut') return delta<0?'var(--g1)':'var(--r1)';   // cutting: losing weight good
+    if(goal==='bulk') return delta>0?'var(--g1)':'var(--r1)'; // bulking: gaining weight good
+    return 'var(--t2)'; // maintenance: neutral
+  }
+  const dir=METRIC_DIRECTION[metric];
+  if(!dir) return 'var(--t2)'; // neutral metric
+  if(dir==='up') return delta>0?'var(--g1)':'var(--r1)';
+  if(dir==='down') return delta<0?'var(--g1)':'var(--r1)';
+  return 'var(--t2)';
+}
+
+function getDeltaIcon(metric, delta){
+  if(delta===0) return '→';
+  const color=getDeltaColor(metric,delta);
+  const arrow=delta>0?'↑':'↓';
+  // If color is green the trend is positive, red is negative
+  return arrow;
+}
+
+function buildMetricChart(metric,label){
+  const data=measLog.filter(m=>m[metric]!=null).slice(-14).sort((a,b)=>a.date.localeCompare(b.date));
+  if(data.length<2)return`<div class="card card-pad" style="text-align:center;font-size:13px;color:var(--t2);">Necesitas al menos 2 registros para ver la evolución de ${label}</div>`;
+  const vals=data.map(m=>+m[metric]);
+  const minV=Math.min(...vals),maxV=Math.max(...vals),range=maxV-minV||1;
+  const first=vals[0],last=vals[vals.length-1];
+  const delta=+(last-first).toFixed(2);
+  const deltaDisp=Math.abs(delta)<0.05?0:delta; // hide micro-noise
+  const deltaColor=getDeltaColor(metric,deltaDisp);
+  const deltaIcon=getDeltaIcon(metric,deltaDisp);
+  // semantic explanation text
+  const isGood=deltaColor==='var(--g1)';
+  const isNeutral=deltaColor==='var(--t2)';
+  const trendText=deltaDisp===0?'Sin cambio':(isGood?'✓ Tendencia positiva':isNeutral?'Tendencia neutra':'⚠ Tendencia a mejorar');
+
+  // chart line color follows semantic: green if trend is good, red if bad, blue if neutral
+  const lineColor=isGood?'#16C79A':isNeutral?'#6366F1':'#EF4444';
+  const gradColor=isGood?'#16C79A':isNeutral?'#6366F1':'#EF4444';
+
+  let html=`<div class="card card-pad">`;
+  // header row
+  html+=`<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">
+    <div><div style="font-size:14px;font-weight:700;color:var(--t1)">${label}</div>
+    <div style="font-size:11px;color:${deltaColor};font-weight:600;margin-top:3px">${trendText}</div></div>
+    <div style="text-align:right;">
+      <div style="font-size:18px;font-weight:800;color:${deltaColor}">${deltaDisp===0?'—':(deltaDisp>0?'+':'')+deltaDisp}</div>
+      <div style="font-size:10px;color:var(--t3);margin-top:1px">vs primer registro</div>
+    </div>
+  </div>`;
+
+  // SVG line chart
+  const W=340,H=80,pad=12;
+  const pts=vals.map((v,i)=>{
+    const x=pad+i*(W-pad*2)/(vals.length-1);
+    const y=H-pad-(v-minV)/(range)*(H-pad*2);
+    return[x,y];
+  });
+  const polyline=pts.map(p=>p.join(',')).join(' ');
+  const area=`${pts[0][0]},${H} `+pts.map(p=>p.join(',')).join(' ')+` ${pts[pts.length-1][0]},${H}`;
+  const gradId='cg_'+metric;
+  html+=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;overflow:visible">`;
+  html+=`<defs><linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="${gradColor}" stop-opacity=".2"/>
+    <stop offset="100%" stop-color="${gradColor}" stop-opacity="0"/>
+  </linearGradient></defs>`;
+  html+=`<polygon points="${area}" fill="url(#${gradId})"/>`;
+  html+=`<polyline points="${polyline}" fill="none" stroke="${lineColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  pts.forEach((p,i)=>{
+    const isT=data[i].date===trackDate;
+    const dotColor=isT?lineColor:'white';
+    html+=`<circle cx="${p[0]}" cy="${p[1]}" r="${isT?5:3}" fill="${dotColor}" stroke="${lineColor}" stroke-width="2"/>`;
+    if(isT) html+=`<text x="${p[0]}" y="${p[1]-10}" text-anchor="middle" font-size="9" fill="${lineColor}" font-weight="700">${vals[i]}</text>`;
+  });
+  html+=`</svg>`;
+
+  // date labels
+  html+=`<div style="display:flex;justify-content:space-between;margin-top:4px;font-size:9px;color:var(--t3);">`;
+  data.forEach(d=>{html+=`<span>${d.date.slice(5)}</span>`;});
+  html+=`</div>`;
+
+  // stats row
+  html+=`<div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--border);">`;
+  const statItems=[
+    {l:'Mínimo',v:minV},
+    {l:'Máximo',v:maxV},
+    {l:'Actual',v:last,highlight:true},
+    {l:'Inicio',v:first},
+  ];
+  html+=statItems.map(s=>`<div style="text-align:center;"><div style="font-size:13px;font-weight:700;color:${s.highlight?lineColor:'var(--t1)'}">${s.v}</div><div style="font-size:10px;color:var(--t3);margin-top:2px">${s.l}</div></div>`).join('');
+  html+=`</div></div>`;
+  return html;
+}
+
+function setTrackMetric(k){trackMetric=k;renderTrackContent();}
+function toggleCheck(key){if(!checksLog[trackDate])checksLog[trackDate]={};checksLog[trackDate][key]=!checksLog[trackDate][key];LS.set(KEY_CHECKS,checksLog);renderTrackContent();}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+document.querySelector('[onclick="openModal(\'m-addmeasure\')"]')?.addEventListener('click',openMeasureModal);
+renderHistory();
+if(profile.name)updateMacroHeader();
+
+// ═══════════════════════════════════════════════
+//  PWA — Service Worker (inline via Blob)
+// ═══════════════════════════════════════════════
+(function registerSW(){
+  if(!('serviceWorker' in navigator)) return;
+
+  const CACHE = 'nutriscan-v1';
+  // Assets to cache on install — fonts and quagga fetched from CDN
+  const PRECACHE = [
+    'https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap',
+    'https://unpkg.com/@ericblade/quagga2@1.8.4/dist/quagga.min.js',
+  ];
+
+  const swCode = `
+const CACHE_NAME = '${CACHE}';
+const PRECACHE_URLS = ${JSON.stringify(PRECACHE)};
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(PRECACHE_URLS.map(u => cache.add(u).catch(()=>{})))
+    ).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+// Network-first for API calls, cache-first for assets
+self.addEventListener('fetch', e => {
+  const url = new URL(e.request.url);
+
+  // Always network for OFF API calls
+  if(url.hostname.includes('openfoodfacts') || url.hostname.includes('openbeautyfacts')) {
+    e.respondWith(
+      fetch(e.request).catch(() => new Response(JSON.stringify({status:0}), {headers:{'Content-Type':'application/json'}}))
+    );
+    return;
+  }
+
+  // Cache-first for everything else (fonts, scripts)
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if(cached) return cached;
+      return fetch(e.request).then(resp => {
+        if(resp && resp.status === 200 && e.request.method === 'GET') {
+          const clone = resp.clone();
+          caches.open(CACHE_NAME).then(c => c.put(e.request, clone));
+        }
+        return resp;
+      }).catch(() => cached);
+    })
+  );
+});
+`;
+
+  const blob = new Blob([swCode], {type:'application/javascript'});
+  const swUrl = URL.createObjectURL(blob);
+
+  navigator.serviceWorker.register(swUrl, {scope:'/'})
+    .then(reg => {
+      console.log('[NutriScan] Service Worker registrado:', reg.scope);
+    })
+    .catch(err => {
+      // SW from blob may be blocked in some browsers — silent fail, app works anyway
+      console.log('[NutriScan] SW no disponible en este contexto:', err.message);
+    });
+})();
+
+// ═══════════════════════════════════════════════
+//  PWA — Install prompt banner
+// ═══════════════════════════════════════════════
+(function pwaInstall(){
+  let deferredPrompt = null;
+
+  // Inject install banner HTML
+  const banner = document.createElement('div');
+  banner.id = 'pwa-banner';
+  banner.style.cssText = `
+    position:fixed;bottom:76px;left:50%;transform:translateX(-50%);
+    width:calc(100% - 28px);max-width:402px;
+    background:linear-gradient(135deg,#0D9E7A,#16C79A);
+    border-radius:16px;padding:14px 16px;
+    display:none;align-items:center;gap:12px;
+    box-shadow:0 8px 28px rgba(22,199,154,0.35);
+    z-index:500;animation:slideUp .3s ease;
+  `;
+  banner.innerHTML = `
+    <div style="width:40px;height:40px;background:rgba(255,255,255,0.2);border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;">🥦</div>
+    <div style="flex:1;">
+      <div style="font-size:14px;font-weight:700;color:white;">Instalar NutriScan</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.82);margin-top:2px;">Añade la app a tu pantalla de inicio</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button id="pwa-install-btn" style="background:white;border:none;border-radius:10px;padding:8px 14px;font-size:13px;font-weight:700;color:#0D9E7A;cursor:pointer;font-family:Sora,sans-serif;">Instalar</button>
+      <button id="pwa-dismiss-btn" style="background:rgba(255,255,255,0.15);border:none;border-radius:10px;padding:8px 10px;font-size:18px;color:white;cursor:pointer;line-height:1;">×</button>
+    </div>
+  `;
+  document.body.appendChild(banner);
+
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Only show if user hasn't dismissed it before
+    if(!localStorage.getItem('ns_pwa_dismissed')) {
+      setTimeout(() => { banner.style.display = 'flex'; }, 3000);
+    }
+  });
+
+  document.getElementById('pwa-install-btn').addEventListener('click', () => {
+    if(!deferredPrompt) return;
+    banner.style.display = 'none';
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(choice => {
+      if(choice.outcome === 'accepted') toast('✅ NutriScan instalada correctamente');
+      deferredPrompt = null;
+    });
+  });
+
+  document.getElementById('pwa-dismiss-btn').addEventListener('click', () => {
+    banner.style.display = 'none';
+    localStorage.setItem('ns_pwa_dismissed', '1');
+  });
+
+  // iOS Safari: no beforeinstallprompt — show manual instructions
+  window.addEventListener('load', () => {
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isInStandalone = window.navigator.standalone;
+    const dismissed = localStorage.getItem('ns_pwa_dismissed_ios');
+    if(isIos && !isInStandalone && !dismissed) {
+      setTimeout(() => {
+        const iosBanner = document.createElement('div');
+        iosBanner.style.cssText = `
+          position:fixed;bottom:76px;left:50%;transform:translateX(-50%);
+          width:calc(100% - 28px);max-width:402px;
+          background:#1C1C1E;border-radius:16px;padding:16px;
+          z-index:500;animation:slideUp .3s ease;
+        `;
+        iosBanner.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+            <div style="font-size:14px;font-weight:700;color:white;">Instalar NutriScan en iOS</div>
+            <button onclick="this.parentElement.parentElement.remove();localStorage.setItem('ns_pwa_dismissed_ios','1')" style="background:none;border:none;font-size:20px;color:#8E8E93;cursor:pointer;padding:0;line-height:1;">×</button>
+          </div>
+          <div style="font-size:13px;color:#8E8E93;line-height:1.6;">
+            1. Toca el botón <b style="color:white;">Compartir</b> <span style="font-size:16px;">⬆️</span> de Safari<br>
+            2. Selecciona <b style="color:white;">"Añadir a pantalla de inicio"</b><br>
+            3. Pulsa <b style="color:white;">"Añadir"</b>
+          </div>
+        `;
+        document.body.appendChild(iosBanner);
+      }, 4000);
+    }
+  });
+
+  // App installed event
+  window.addEventListener('appinstalled', () => {
+    banner.style.display = 'none';
+    deferredPrompt = null;
+    toast('🎉 ¡NutriScan instalada! Búscala en tu pantalla de inicio');
+  });
+})();
+</script>
+</body>
+</html>
