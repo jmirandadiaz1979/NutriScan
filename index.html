@@ -342,6 +342,7 @@ html,body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--t1);max
   <div class="scan-float" style="margin:12px 0 0;"><button class="scan-btn" onclick="openPhoto()"><div class="scan-btn-ico" style="background:linear-gradient(135deg,#6366F1,#8B5CF6);"><svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div><div><strong>Foto del plato</strong><small>Calorías, micros y score con IA</small></div></button></div>
   <div style="padding:12px 18px 0;"><button class="btn btn-secondary" onclick="openAlts()">🔄 Alternativas más saludables</button></div>
   <div style="padding:10px 18px 0;"><button class="btn btn-secondary" onclick="openPlan()">🍽️ Plan de alimentación y compra</button></div>
+  <div style="padding:10px 18px 0;"><button class="btn btn-secondary" onclick="openMyFoods()">📚 Mi base de alimentos</button></div>
   <div class="type-tabs" style="margin-bottom:4px;"><button class="type-tab on" onclick="filterHistory('food',this)">🥗 Alimentos</button><button class="type-tab" onclick="filterHistory('cosm',this)">💄 Cosméticos</button><button class="type-tab" onclick="filterHistory('all',this)">📦 Todo</button></div>
   <div class="scroll" style="padding-top:6px;"><div style="display:flex;align-items:center;justify-content:space-between;margin:0 4px 10px;"><div class="sec-title" style="margin:0">Historial reciente</div><div style="font-size:10px;color:var(--t3);">← desliza para borrar</div></div><div class="card" id="hist-container"><div id="hist-list" style="padding:6px 0;"><div style="padding:28px 20px;text-align:center;color:var(--t3);font-size:13px;line-height:1.6;"><div style="font-size:36px;margin-bottom:10px;">📦</div>Aún no has escaneado ningún producto</div></div></div></div>
   <div class="bnav">
@@ -471,6 +472,7 @@ html,body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--t1);max
       <button class="mtab" onclick="selectNatCat('lacteo',this)" style="margin-right:6px;">🥛 Lácteos</button>
       <button class="mtab" onclick="selectNatCat('grasa',this)" style="margin-right:6px;">🥑 Grasas</button>
       <button class="mtab" onclick="selectNatCat('fruto_seco',this)" style="margin-right:6px;">🥜 Frutos secos</button>
+      <button class="mtab" onclick="selectNatCat('__mine',this)" style="margin-right:6px;">⭐ Mis productos</button>
     </div>
     <!-- List -->
     <div id="addmeal-list" style="max-height:240px;overflow-y:auto;background:var(--bg);border-radius:var(--radius2);margin-bottom:14px;"></div>
@@ -553,6 +555,16 @@ html,body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--t1);max
 <div class="overlay" id="m-altdetail">
   <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title" id="alt-detail-name">Alternativa</span><button class="modal-close" onclick="closeModal('m-altdetail')">×</button></div>
   <div class="modal-body" id="alt-detail-body"></div></div>
+</div>
+
+<div class="overlay" id="m-savefood">
+  <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title">Guardar en mi base</span><button class="modal-close" onclick="closeModal('m-savefood')">×</button></div>
+  <div class="modal-body" id="savefood-body"></div></div>
+</div>
+
+<div class="overlay" id="m-myfoods">
+  <div class="modal"><div class="modal-grip"></div><div class="modal-hdr"><span class="modal-title">📚 Mi base de alimentos</span><button class="modal-close" onclick="closeModal('m-myfoods')">×</button></div>
+  <div class="modal-body" id="myfoods-body"></div></div>
 </div>
 
 <div class="toast" id="toast"></div>
@@ -726,7 +738,7 @@ async function fetchProduct(code,type){
 
   // Build ordered endpoint list — v2 API returns richer fields including nutriscore
   const foodEndpoints=[
-    `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,product_name_en,product_name_fr,generic_name,abbreviated_product_name,brands,categories_tags,labels_tags,nutriscore_grade,nutrition_grade_fr,ecoscore_grade,nutriments,additives_tags,additives_original_tags,image_thumb_url,image_small_url,image_url,ingredients_text,code`,
+    `https://world.openfoodfacts.org/api/v2/product/${code}?fields=product_name,product_name_es,product_name_en,product_name_fr,generic_name,abbreviated_product_name,brands,categories_tags,labels_tags,nutriscore_grade,nutrition_grade_fr,ecoscore_grade,nutriments,additives_tags,additives_original_tags,image_thumb_url,image_small_url,image_url,ingredients_text,code,allergens_tags,nova_group`,
     `https://es.openfoodfacts.org/api/v2/product/${code}.json`,
     `https://fr.openfoodfacts.org/api/v2/product/${code}.json`,
     `https://world.openfoodfacts.org/api/v0/product/${code}.json`,
@@ -1515,8 +1527,8 @@ function filterAddMealList(){
 
   } else {
     let items=NATURAL_FOODS;
-    if(natCatFilter) items=items.filter(f=>f.cat===natCatFilter);
-    if(q) items=items.filter(f=>f.name.toLowerCase().includes(q)||f.cat.includes(q));
+    if(natCatFilter==='__mine') items=items.filter(f=>f.custom); else if(natCatFilter) items=items.filter(f=>f.cat===natCatFilter);
+    if(q) items=items.filter(f=>f.name.toLowerCase().includes(q)||f.cat.includes(q)||(f.brand||'').toLowerCase().includes(q));
     if(!items.length){
       list.innerHTML='<div style="padding:20px;text-align:center;font-size:13px;color:var(--t3);">Sin resultados para esa búsqueda</div>';
       return;
@@ -1597,7 +1609,7 @@ function confirmMealAdd(){
   let entry;
   if(addMealSelected.type==='natural'){
     const d=addMealSelected.data;
-    entry={name:d.name,qty,source:'natural',ico:d.ico,
+    entry={name:d.name,qty,source:d.custom?'scanned':'natural',ico:d.ico,
       kcal:Math.round(d.kcal*f),prot:+(d.prot*f).toFixed(1),
       carb:+(d.carb*f).toFixed(1),fat:+(d.fat*f).toFixed(1),fiber:+(d.fiber*f).toFixed(1),
       micros:foodMicros(d,qty)};
@@ -2387,6 +2399,200 @@ semillas_canamo:70,8,700,1200,9.9,0.5,0,0,110,0`;
   NATURAL_FOODS.forEach(f=>{f.m=map[f.id]||null;});
 })();
 function foodMicros(f,grams){const o={};const m=f.m||{};Object.keys(m).forEach(k=>o[k]=+(m[k]*grams/100).toFixed(2));return o;}
+
+// ═══════════════════════════════════════════════
+//  MI BASE DE ALIMENTOS — productos escaneados guardados (se suman a NATURAL_FOODS)
+// ═══════════════════════════════════════════════
+const KEY_CUSTOM='ns_customfoods';
+const CF_CAT={verdura:'🥬 Verduras y setas',hortaliza:'🥕 Hortalizas',fruta:'🍎 Frutas',legumbre:'🫘 Legumbres',cereal:'🌾 Cereales y tubérculos',proteina:'🥩 Proteínas',lacteo:'🥛 Lácteos',grasa:'🫒 Grasas',fruto_seco:'🥜 Frutos secos y semillas'};
+const CF_ICO={verdura:'🥬',hortaliza:'🥕',fruta:'🍎',legumbre:'🫘',cereal:'🌾',proteina:'🥩',lacteo:'🥛',grasa:'🫒',fruto_seco:'🥜'};
+const CF_PRICE={verdura:2.5,hortaliza:2,fruta:2.5,legumbre:2.2,cereal:3,proteina:10,lacteo:2.5,grasa:7,fruto_seco:14};
+const CF_TAGS=['gluten','lactosa','huevo','frutos secos','cacahuete','soja','sésamo','pescado','marisco','carne','embutido','miel'];
+let customFoods=LS.get(KEY_CUSTOM)||[];
+let cfDraft=null;
+customFoods.forEach(f=>{if(!NATURAL_FOODS.some(x=>x.id===f.id))NATURAL_FOODS.push(f);});
+
+function cfId(p){return 'c_'+String(p.code||p._id||getBestName(p).toLowerCase().replace(/[^a-z0-9]+/g,'_'));}
+function cfNutr(p){
+  const n=p.nutriments||{};
+  const kcal=+n['energy-kcal_100g']||(+n['energy_100g']?+n['energy_100g']*0.239:0)||0;
+  const r=v=>+(+v||0).toFixed(1);
+  return{kcal:Math.round(kcal),prot:r(n['proteins_100g']),carb:r(n['carbohydrates_100g']),fat:r(n['fat_100g']),fiber:r(n['fiber_100g']),sugar:r(n['sugars_100g'])};
+}
+function cfMicros(p){
+  const n=p.nutriments||{};
+  const g=(k,mult)=>{const v=+n[k];return isFinite(v)&&v>0?+(v*mult).toFixed(2):0;};
+  return{calcio_mg:g('calcium_100g',1000),hierro_mg:g('iron_100g',1000),magnesio_mg:g('magnesium_100g',1000),potasio_mg:g('potassium_100g',1000),zinc_mg:g('zinc_100g',1000),vitC_mg:g('vitamin-c_100g',1000),vitD_ug:g('vitamin-d_100g',1e6),vitB12_ug:g('vitamin-b12_100g',1e6),folato_ug:g('vitamin-b9_100g',1e6),vitA_ug:g('vitamin-a_100g',1e6)};
+}
+function cfTags(p){
+  const t=new Set();
+  const A={'en:gluten':'gluten','en:milk':'lactosa','en:eggs':'huevo','en:nuts':'frutos secos','en:peanuts':'cacahuete','en:soybeans':'soja','en:sesame-seeds':'sésamo','en:fish':'pescado','en:crustaceans':'marisco','en:molluscs':'marisco'};
+  (p.allergens_tags||[]).forEach(a=>{if(A[a])t.add(A[a]);});
+  const c=(p.categories_tags||[]).join(' ');
+  if(/en:(meats|poultries|sausages|hams|charcuteries|cured-hams|prepared-meats|beef|pork|chicken|turkey)\b/.test(c))t.add('carne');
+  if(/en:(sausages|hams|charcuteries|cured-hams|prepared-meats)\b/.test(c))t.add('embutido');
+  if(/en:(fishes|fish-and-seafood|canned-fishes|tunas|salmons)\b/.test(c))t.add('pescado');
+  if(/en:(seafood|shrimps|molluscs)\b/.test(c))t.add('marisco');
+  if(/en:honeys\b/.test(c))t.add('miel');
+  return Array.from(t);
+}
+function cfGuessCat(p){
+  const c=(p.categories_tags||[]).join(' '),n=cfNutr(p),has=re=>re.test(c);
+  if(has(/en:(vegetable-oils|olive-oils|oils|fats|butters|margarines)\b/))return'grasa';
+  if(has(/en:(nuts|seeds|dried-nuts|peanuts|almonds|walnuts|hazelnuts|nut-butters)\b/))return'fruto_seco';
+  if(has(/en:(dairies|milks|cheeses|yogurts|fermented-milk-products|plant-based-milks|soy-milks|oat-milks|cottage-cheeses)\b/))return'lacteo';
+  if(has(/en:(meats|poultries|fishes|fish-and-seafood|seafood|eggs|sausages|hams|tofu|meat-analogues|canned-fishes|tunas|prepared-meats)\b/))return'proteina';
+  if(has(/en:(legumes|pulses|beans|lentils|chickpeas|legumes-and-their-products|hummus)\b/))return'legumbre';
+  if(has(/en:(fruits|fresh-fruits|dried-fruits|fruits-and-their-products)\b/)&&!has(/en:(juices|jams|compotes|fruit-juices|nectars)\b/))return'fruta';
+  if(has(/en:(vegetables|fresh-vegetables|mushrooms|canned-vegetables|salads|vegetables-based-foods)\b/))return'verdura';
+  if(has(/en:(cereals|breads|pastas|rices|flours|breakfast-cereals|potatoes|cereals-and-potatoes|biscuits|crackers|cookies)\b/))return'cereal';
+  const kP=n.prot*4,kC=n.carb*4,kF=n.fat*9;
+  if(kF>=kP&&kF>=kC)return'grasa';
+  if(kP>kC)return'proteina';
+  return'cereal';
+}
+function cfSec(f){
+  const t=f.tags||[];
+  if(t.indexOf('carne')>=0||t.indexOf('embutido')>=0)return'Carnicería';
+  if(t.indexOf('pescado')>=0||t.indexOf('marisco')>=0)return'Pescadería';
+  if(t.indexOf('huevo')>=0&&f.cat==='proteina')return'Huevos';
+  if(f.cat==='lacteo')return'Lácteos';
+  if(f.cat==='verdura'||f.cat==='hortaliza')return'Verdura';
+  if(f.cat==='fruta')return'Fruta';
+  if(f.cat==='grasa'||f.cat==='fruto_seco')return'Aceites y frutos secos';
+  return'Despensa';
+}
+// Candidatos propios para cada grupo de comida del plan
+function customForPool(pool){
+  return NATURAL_FOODS.filter(f=>{
+    if(!f.custom)return false;
+    const t=f.tags||[];
+    switch(pool){
+      case'pbf':return f.cat==='lacteo'||(f.cat==='proteina'&&t.indexOf('huevo')>=0);
+      case'cbf':return f.cat==='cereal'&&f.carb>=40;
+      case'pmain':return(f.cat==='proteina'||f.cat==='legumbre')&&f.prot>=8;
+      case'cmain':return f.cat==='cereal'&&f.carb>=15;
+      case'nuts':return f.cat==='fruto_seco';
+      case'spro':return f.cat==='lacteo'||(f.cat==='legumbre'&&f.prot>=5);
+    }
+    return false;
+  });
+}
+function toggleUseCustom(){planPrefs.useCustom=planPrefs.useCustom===false;savePlanPrefs();renderPlanPrefs();}
+
+// ── Botón en la ficha del producto ──
+function cfInjectBtn(){
+  const scroll=document.getElementById('res-scroll');if(!scroll)return;
+  const old=document.getElementById('cf-save-card');if(old)old.remove();
+  const p=currentProduct;if(!p||p._scanType==='cosm')return;
+  const ex=customFoods.find(f=>f.id===cfId(p));
+  const c=document.createElement('div');c.id='cf-save-card';c.className='card card-pad';
+  c.innerHTML=ex
+    ?`<div style="display:flex;align-items:center;gap:12px;"><div style="flex:1;"><div style="font-size:13px;font-weight:700;color:var(--g2);">✓ En tu base de alimentos</div><div style="font-size:11px;color:var(--t2);margin-top:2px;">${CF_CAT[ex.cat]}${ex.inPlan===false?' · fuera de los planes':' · se usa en los planes'}</div></div><button class="btn btn-secondary" style="width:auto;padding:9px 16px;font-size:13px;" onclick="openSaveFood()">Editar</button></div>`
+    :`<button class="btn btn-primary" onclick="openSaveFood()">➕ Guardar en mi base de alimentos</button>`;
+  scroll.insertBefore(c,scroll.children[1]||null);
+}
+const _origRenderResultCF=renderResult;
+renderResult=function(p){
+  _origRenderResultCF(p);
+  try{cfInjectBtn();}catch(e){}
+};
+
+// ── Modal de guardado ──
+function openSaveFood(){
+  const p=currentProduct;if(!p||p._scanType==='cosm')return;
+  const n=cfNutr(p);
+  if(!n.kcal&&!n.prot&&!n.carb&&!n.fat){toast('Este producto no tiene valores nutricionales');return;}
+  const id=cfId(p),ex=customFoods.find(f=>f.id===id);
+  const ns=(p.nutriscore_grade||p.nutrition_grade_fr||'').toLowerCase();
+  cfDraft={id:id,tags:ex?(ex.tags||[]).slice():cfTags(p),inPlan:ex?ex.inPlan!==false:(['d','e'].indexOf(ns)<0&&n.sugar<=20)};
+  const cat=ex?ex.cat:cfGuessCat(p);
+  const opts=Object.keys(CF_CAT).map(k=>`<option value="${k}" ${k===cat?'selected':''}>${CF_CAT[k]}</option>`).join('');
+  const price=ex?ex.price:CF_PRICE[cat];
+  document.getElementById('savefood-body').innerHTML=
+   `<div style="background:var(--bg);border-radius:var(--radius2);padding:12px;margin-bottom:14px;font-size:12px;color:var(--t2);line-height:1.6;"><b style="color:var(--t1)">${n.kcal} kcal</b> /100 g · Prot ${n.prot}g · HC ${n.carb}g (azúcares ${n.sugar}g) · Grasa ${n.fat}g · Fibra ${n.fiber}g</div>
+    <div class="field"><label>Nombre</label><input id="sf-name" value="${escHtml(ex?ex.name:getBestName(p))}"></div>
+    <div class="field"><label>Se guardará en</label><select id="sf-cat" onchange="cfCatChanged()">${opts}</select></div>
+    <div class="field"><label>Precio aprox. (€/kg o €/l)</label><input id="sf-price" type="number" min="0" step="0.1" value="${price}" oninput="this.dataset.t=1"></div>
+    <div style="font-size:12px;font-weight:600;color:var(--t2);margin-bottom:6px;">Alérgenos y etiquetas <span style="font-weight:400;color:var(--t3);">(afectan a alergias y dietas del plan; revísalos)</span></div>
+    <div id="sf-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;"></div>
+    <label style="display:flex;align-items:center;gap:10px;font-size:13px;margin-bottom:16px;cursor:pointer;"><input type="checkbox" id="sf-plan" ${cfDraft.inPlan?'checked':''} style="width:18px;height:18px;"><span>Usar en los planes de alimentación</span></label>
+    <button class="btn btn-primary" onclick="cfSave()">${ex?'Guardar cambios':'Guardar en mi base'}</button>
+    ${ex?`<button class="btn btn-secondary" onclick="cfDelete('${id}')" style="margin-top:10px;color:var(--r1);">Quitar de mi base</button>`:''}`;
+  cfRenderTags();openModal('m-savefood');
+}
+function cfRenderTags(){
+  const el=document.getElementById('sf-tags');if(!el||!cfDraft)return;
+  el.innerHTML=CF_TAGS.map((t,i)=>`<button class="mtab ${cfDraft.tags.indexOf(t)>=0?'on':''}" onclick="cfToggleTag(${i})">${t}</button>`).join('');
+}
+function cfToggleTag(i){const t=CF_TAGS[i],a=cfDraft.tags,k=a.indexOf(t);if(k>=0)a.splice(k,1);else a.push(t);cfRenderTags();}
+function cfCatChanged(){const pr=document.getElementById('sf-price');if(pr&&!pr.dataset.t)pr.value=CF_PRICE[document.getElementById('sf-cat').value];}
+function cfSave(){
+  const p=currentProduct,d=cfDraft;if(!p||!d)return;
+  const name=document.getElementById('sf-name').value.trim()||getBestName(p);
+  const cat=document.getElementById('sf-cat').value;
+  const price=Math.max(0,parseFloat(document.getElementById('sf-price').value));
+  const f=Object.assign({
+    id:d.id,name:name,brand:String(p.brands||'').split(',')[0].trim(),code:p.code||'',cat:cat,ico:CF_ICO[cat],
+    price:isFinite(price)?price:CF_PRICE[cat],tags:d.tags.slice(),custom:true,
+    inPlan:document.getElementById('sf-plan').checked,
+    ns:(p.nutriscore_grade||p.nutrition_grade_fr||'').toLowerCase(),
+    img:p.image_small_url||p.image_thumb_url||'',m:cfMicros(p)
+  },cfNutr(p));
+  f.sec=cfSec(f);
+  const i=customFoods.findIndex(x=>x.id===f.id);
+  if(i>=0)customFoods[i]=f;else customFoods.push(f);
+  const j=NATURAL_FOODS.findIndex(x=>x.id===f.id);
+  if(j>=0)NATURAL_FOODS[j]=f;else NATURAL_FOODS.push(f);
+  delete FM[f.id];
+  try{LS.set(KEY_CUSTOM,customFoods);}catch(e){toast('No se pudo guardar (almacenamiento lleno)');return;}
+  closeModal('m-savefood');
+  toast('✅ Guardado en '+CF_CAT[cat].replace(/^\S+\s/,''));
+  cfInjectBtn();
+  if(document.getElementById('m-myfoods').classList.contains('open'))cfRenderMy();
+}
+function cfDelete(id){
+  if(!confirm('¿Quitar este producto de tu base de alimentos?'))return;
+  customFoods=customFoods.filter(f=>f.id!==id);
+  const j=NATURAL_FOODS.findIndex(x=>x.id===id);if(j>=0)NATURAL_FOODS.splice(j,1);
+  delete FM[id];
+  LS.set(KEY_CUSTOM,customFoods);
+  // Si el plan guardado usaba este producto, se descarta para evitar referencias rotas
+  if(plan&&plan.days&&plan.days.some(d=>Object.keys(d).some(k=>d[k].some(it=>it.id===id)))){plan=null;LS.set(KEY_PLAN,null);if(document.getElementById('s-plan').classList.contains('active'))renderPlan();}
+  closeModal('m-savefood');
+  toast('Producto quitado');
+  if(currentProduct)cfInjectBtn();
+  if(document.getElementById('m-myfoods').classList.contains('open'))cfRenderMy();
+}
+// ── Gestión de la base ──
+function openMyFoods(){cfRenderMy();openModal('m-myfoods');}
+function cfTogglePlan(id,on){const f=customFoods.find(x=>x.id===id);if(!f)return;f.inPlan=on;LS.set(KEY_CUSTOM,customFoods);}
+function cfRenderMy(){
+  const b=document.getElementById('myfoods-body');
+  if(!customFoods.length){b.innerHTML='<div style="padding:28px 10px;text-align:center;color:var(--t3);font-size:13px;line-height:1.6;">Aún no has guardado productos.<br>Escanea uno y pulsa «Guardar en mi base de alimentos».</div>';return;}
+  b.innerHTML='<div style="font-size:12px;color:var(--t2);line-height:1.5;margin-bottom:4px;">Los productos marcados con «Plan» se tienen en cuenta al generar planes y listas de la compra.</div>'+
+  Object.keys(CF_CAT).map(cat=>{
+    const rows=customFoods.filter(f=>f.cat===cat).sort((a,b)=>a.name.localeCompare(b.name));
+    if(!rows.length)return'';
+    return`<div style="font-size:11px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin:14px 0 4px;">${CF_CAT[cat]}</div>`+
+    rows.map(f=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);"><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(f.name)}</div><div style="font-size:11px;color:var(--t2);">${escHtml(f.brand||'')}${f.brand?' · ':''}${f.kcal} kcal · P ${f.prot} · HC ${f.carb} · G ${f.fat} /100g</div></div><label style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:5px;cursor:pointer;"><input type="checkbox" ${f.inPlan!==false?'checked':''} onchange="cfTogglePlan('${f.id}',this.checked)">Plan</label><button class="mp-del" onclick="cfDelete('${f.id}')">×</button></div>`).join('');
+  }).join('');
+}
+// Fila del selector de alimentos con etiqueta "Mi producto"
+naturalFoodRow=function(f){
+  const badge=f.custom?` <span style="font-size:9px;font-weight:700;color:var(--b2);background:var(--b3);border-radius:6px;padding:2px 6px;vertical-align:middle;">MI PRODUCTO</span>`:'';
+  const sub=f.custom&&f.brand?`<div style="font-size:11px;color:var(--t3);">${escHtml(f.brand)}</div>`:'';
+  return`<div onclick="selectNaturalFood('${f.id}')"
+    style="padding:11px 14px;border-bottom:1px solid var(--card);cursor:pointer;display:flex;align-items:center;gap:10px;"
+    onmouseenter="this.style.background='var(--g3)'" onmouseleave="this.style.background=''">
+    <span style="font-size:22px;flex-shrink:0">${f.ico}</span>
+    <div style="flex:1;min-width:0">
+      <div style="font-size:13px;font-weight:600">${escHtml(f.name)}${badge}</div>${sub}
+      <div style="font-size:11px;color:var(--t2);margin-top:1px">${f.kcal} kcal · P:${f.prot}g · HC:${f.carb}g · G:${f.fat}g · F:${f.fiber}g <span style="color:var(--t3)">/ 100g</span></div>
+    </div>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--t3)" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>`;
+};
 // Vista rápida de micros en el selector de alimentos naturales
 const _origUAMP=updateAddMealPreview;
 updateAddMealPreview=function(){
@@ -2430,6 +2636,7 @@ let plan=LS.get(KEY_PLAN)||null,planDay=0;
 const FM={};const F=id=>FM[id]||(FM[id]=NATURAL_FOODS.find(x=>x.id===id));
 function savePlanPrefs(){LS.set(KEY_PLANPREFS,planPrefs);}
 function allowedFood(f,pr){
+  if(f.custom&&(pr.useCustom===false||f.inPlan===false))return false;
   const t=f.tags||[];
   if(pr.allergies.some(a=>t.indexOf(a)>=0))return false;
   const dl=String(pr.dislikes||'').toLowerCase().split(',').map(x=>x.trim()).filter(Boolean);
@@ -2445,7 +2652,7 @@ function slotCands(pool,pr){
   if(pool==='fruit')c=NATURAL_FOODS.filter(f=>f.cat==='fruta'&&['limon','datiles','pasas'].indexOf(f.id)<0);
   else if(pool==='veg')c=NATURAL_FOODS.filter(f=>(f.cat==='verdura'||f.cat==='hortaliza')&&['ajo','maiz'].indexOf(f.id)<0);
   else if(pool==='oil')c=[F('aceite_oliva')];
-  else c=POOL[pool].split(' ').map(F).filter(Boolean);
+  else c=POOL[pool].split(' ').map(F).filter(Boolean).concat(customForPool(pool));
   c=c.filter(f=>allowedFood(f,pr));
   if(!c.length){
     const A=NATURAL_FOODS.filter(f=>allowedFood(f,pr));
@@ -2463,6 +2670,7 @@ function pickFood(c,g,st,cw,diet){
     MICRO_DEF.forEach(d=>{gain+=Math.min(mc[d.k]||0,Math.max(0,d.rdv-(st.mic[d.k]||0)))/d.rdv;});
     let sc=gain*2-(st.used[f.id]||0)*2.2-f.price*g/1000*cw+Math.random()*1.2;
     if(diet==='mediterranea'&&MED.has(f.id))sc+=0.7;
+    if(f.custom)sc+=0.9;
     if(sc>bs){bs=sc;best=f;}
   });
   return best;
@@ -2550,7 +2758,7 @@ function renderPlanPrefs(){
    `<div style="${lab}margin-top:0">Alergias / intolerancias</div><div style="${wrap}">${ALLERGENS.map(a=>chip('allergies',a,a,planPrefs.allergies.indexOf(a)>=0)).join('')}</div>
     <div class="field" style="margin:12px 0 0;"><label>Alimentos que no quiero (separados por comas)</label><input value="${escHtml(planPrefs.dislikes)}" placeholder="ej. coliflor, sardina" oninput="setPlanPref('dislikes',this.value)"></div>
     <div class="field" style="margin:12px 0 0;"><label>Tipo de dieta</label><select onchange="setPlanPref('diet',this.value)">${DIETS.map(d=>`<option value="${d[0]}" ${planPrefs.diet===d[0]?'selected':''}>${d[1]}</option>`).join('')}</select></div>
-    <div style="${lab}">Comidas al día (mín. 2)</div><div style="${wrap}">${PLAN_MEALS.map(m=>chip('meals',m[0],m[1],planPrefs.meals.indexOf(m[0])>=0)).join('')}</div>
+    ${customFoods.length?`<div style="${lab}">Mis productos guardados</div><div style="${wrap}"><button class="mtab ${planPrefs.useCustom!==false?'on':''}" onclick="toggleUseCustom()">⭐ Usar en el plan (${customFoods.filter(f=>f.inPlan!==false).length})</button></div>`:''}<div style="${lab}">Comidas al día (mín. 2)</div><div style="${wrap}">${PLAN_MEALS.map(m=>chip('meals',m[0],m[1],planPrefs.meals.indexOf(m[0])>=0)).join('')}</div>
     <div class="field-row" style="margin-top:12px;"><div class="field" style="margin:0;"><label>Presupuesto (€, vacío = sin límite)</label><input type="number" min="0" step="1" value="${planPrefs.budget||''}" oninput="setPlanPref('budget',this.value)"></div><div class="field" style="margin:0;"><label>Por</label><select onchange="setPlanPref('period',this.value)"><option value="week" ${planPrefs.period==='week'?'selected':''}>semana</option><option value="day" ${planPrefs.period==='day'?'selected':''}>día</option></select></div></div>`;
   const T=planTargets();
   document.getElementById('plan-target').innerHTML=T?`Objetivo diario: <b>${T.kcal} kcal</b> · Prot ${T.prot}g · HC ${T.carb}g · Grasa ${T.fat}g · Fibra ${T.fiber}g`:'⚠️ Completa tu Perfil (peso, altura, edad, objetivo) para calcular tus necesidades.';
@@ -2580,7 +2788,7 @@ function addPlanDayToDiary(){
   if(!diaryData[diaryCurrentDate])diaryData[diaryCurrentDate]={};
   Object.keys(day).forEach(k=>{
     if(!diaryData[diaryCurrentDate][k])diaryData[diaryCurrentDate][k]=[];
-    day[k].forEach(it=>{const f=F(it.id),q=it.g/100;diaryData[diaryCurrentDate][k].push({name:f.name,qty:it.g,source:'natural',ico:f.ico,kcal:Math.round(f.kcal*q),prot:+(f.prot*q).toFixed(1),carb:+(f.carb*q).toFixed(1),fat:+(f.fat*q).toFixed(1),fiber:+(f.fiber*q).toFixed(1),micros:foodMicros(f,it.g)});});
+    day[k].forEach(it=>{const f=F(it.id),q=it.g/100;diaryData[diaryCurrentDate][k].push({name:f.name,qty:it.g,source:f.custom?'scanned':'natural',ico:f.ico,kcal:Math.round(f.kcal*q),prot:+(f.prot*q).toFixed(1),carb:+(f.carb*q).toFixed(1),fat:+(f.fat*q).toFixed(1),fiber:+(f.fiber*q).toFixed(1),micros:foodMicros(f,it.g)});});
   });
   LS.set(KEY_DIARY,diaryData);toast('✅ Día añadido al diario de hoy');
 }
